@@ -1,93 +1,39 @@
-# pyids_example.py
-# Example of training and evaluating an interpretable decision set using pyIDS
-
 import sys
 import os
 
 # Add the pyIDS directory to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../pyIDS")))
 
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import pandas as pd
-
+from pyids.algorithms.ids_classifier import mine_CARs
 from pyids.algorithms.ids import IDS
 from pyids.data_structures.ids_rule import IDSRule
-from pyids.algorithms.ids_classifier import mine_CARs
+
 from pyarc.qcba.data_structures import QuantitativeDataFrame
+import io
+import requests
 
-# -----------------------------
-# Load the iris dataset
-# -----------------------------
-iris = load_iris()
-X = pd.DataFrame(iris.data, columns=iris.feature_names)
-y = pd.Series(iris.target, name="class")
+url = "https://raw.githubusercontent.com/kliegr/arcBench/master/data/folds_discr/train/iris0.csv"
+s = requests.get(url).content
+df = pd.read_csv(io.StringIO(s.decode('utf-8')))
+cars = mine_CARs(df, rule_cutoff=50)
+lambda_array = [1, 1, 1, 1, 1, 1, 1]
 
-# Combine features and target into a single DataFrame
-data = X.copy()
-data["class"] = y
+quant_dataframe = QuantitativeDataFrame(df)
 
-# Split into train/test sets
-train_df, test_df = train_test_split(data, test_size=0.3, random_state=42)
+ids = IDS(algorithm="SLS")
+ids.fit(quant_dataframe=quant_dataframe, class_association_rules=cars, lambda_array=lambda_array)
 
-# -----------------------------
-# Mine Class Association Rules (CARs)
-# -----------------------------
-cars = mine_CARs(
-    df=train_df,
-    rule_cutoff=20,
-    sample=False,
-    random_seed=42
-)
-
-print("\n--- Mined Cars ---")
-print(f"\nMined CARs Count: {len(cars)}")
-for i, car in enumerate(cars, 1):
-    antecedent = getattr(car, "antecedent", None)
-    consequent = getattr(car, "consequent", None)
-    support = getattr(car, "support", None)
-    confidence = getattr(car, "confidence", None)
-
-    print(f"\nCAR {i}:")
-    print(f"  IF {antecedent} THEN class = {consequent}")
-    print(f"  Support: {support}, Confidence: {confidence}")
-
-# -----------------------------
-# Convert to QuantitativeDataFrame (required by IDS)
-# -----------------------------
-quant_train = QuantitativeDataFrame(train_df)
-quant_test = QuantitativeDataFrame(test_df)
-
-# -----------------------------
-# Initialize IDS
-# -----------------------------
-ids_model = IDS(algorithm="RUSM")  # Optimizer: SLS, DLS, DUSM, RUSM
-
-# -----------------------------
-# Fit IDS model
-# -----------------------------
-ids_model.fit(
-    quant_dataframe=quant_train,
-    class_association_rules=cars,
-    lambda_array=[1]*7,                 # optional, default is [1]*7
-    default_class="majority_class_in_uncovered",
-    random_seed=42
-)
-
-# -----------------------------
-# Print learned rules
-# -----------------------------
 print("\n--- Learned Decision Rules ---")
-print(f"\nDecision Rules Count: {len(ids_model.clf.rules)}")
-for r in ids_model.clf.rules:
-    print(IDSRule(rule=r).to_str())
+print(f"Total Rules Selected by IDS: {len(ids.clf.rules)}\n")
 
-# -----------------------------
-# Evaluate on test data
-# -----------------------------
-y_pred = ids_model.predict(quant_test)
-y_true = test_df["class"].astype(str)  # must match QuantitativeDataFrame string dtype
+car_idx = 0
+for i in enumerate(ids.clf.rules, 1):
+    car = cars[car_idx]  # retrieve the original CAR from the mined list
+    print(f"Rule {i}:")
+    print(f"  IF {car.antecedent} THEN class = {car.consequent}")
+    print(f"  Support: {car.support}, Confidence: {car.confidence}\n")
+    car_idx+=1
 
-acc = accuracy_score(y_true, y_pred)
-print(f"\nTest Accuracy: {acc:.3f}")
+acc = ids.score(quant_dataframe)
+print(f"Accuracy Score: {acc}\n")
