@@ -64,8 +64,9 @@ dataset_files = [
     "labelled_validation_data.csv"
 ]
 
-input_dir = "data/bethdataset"
+input_dir = "data/unprocessed/bethdataset"
+output_dir = "data/processed/bethdataset"
 for file in dataset_files:
     in_path = os.path.join(input_dir, file)
-    out_path = os.path.join(input_dir, "processed_" + file)
+    out_path = os.path.join(output_dir, "processed_" + file)
     preprocess_data(in_path, out_path)
