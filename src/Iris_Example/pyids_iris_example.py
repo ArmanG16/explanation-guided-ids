@@ -29,5 +29,26 @@ ids.fit(quant_dataframe=quant_dataframe, class_association_rules=cars, lambda_ar
 print("\n--- Learned Decision Rules ---")
 print(f"Total Rules Selected by IDS: {len(ids.clf.rules)}\n")
 
+print("\n--- Simplified IDS Rule Summaries ---")
+
+for i, rule in enumerate(ids.clf.rules, start=1):
+    car = rule.car
+
+    antecedent = dict(car.antecedent)
+    consequent = car.consequent
+    confidence = car.confidence
+    support = car.support
+    f1 = getattr(rule, "f1", None)
+
+    print(f"Rule {i}:")
+    print(f"  IF {antecedent}")
+    print(f"  THEN {consequent}")
+    print(f"  Support: {support:.3f}, Confidence: {confidence:.3f}", end="")
+    if f1 is not None:
+        print(f", F1: {f1:.3f}")
+    else:
+        print()
+
+
 acc = ids.score(quant_dataframe)
 print(f"Accuracy Score: {acc}\n")
