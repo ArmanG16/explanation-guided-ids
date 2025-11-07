@@ -16,6 +16,7 @@ import requests
 url = "https://raw.githubusercontent.com/kliegr/arcBench/master/data/folds_discr/train/iris0.csv"
 s = requests.get(url).content
 df = pd.read_csv(io.StringIO(s.decode('utf-8')))
+
 cars = mine_CARs(df, rule_cutoff=50)
 print("\n--- Learned Decision Rules ---")
 print(f"Mined CARs Count: {len(cars)}\n")
