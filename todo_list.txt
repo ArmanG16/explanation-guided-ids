@@ -1,0 +1,9 @@
+1. Create a script to clean out the processed data on the start of every run of preprocessing
+
+2. Create functions for each stage
+    - Preprocessing data
+    - Mining CARs
+    - Finding rules from CARs
+    - Generating learning curve
+
+3. It takes to long and too much RAM to mine the CARs, we need to find a way to run it faster
