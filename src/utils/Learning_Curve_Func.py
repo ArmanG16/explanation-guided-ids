@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedShuffleSplit
 from pyarc.qcba.data_structures import QuantitativeDataFrame
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../pyIDS")))
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, os.path.join(BASE_DIR, "../../pyIDS"))
 
 from pyids.algorithms.ids import IDS
 from pyids.algorithms.ids_classifier import mine_CARs
@@ -53,6 +55,8 @@ def stratified_subsample(df: pd.DataFrame, y_col: str, n_samples: int, seed: int
     return out.sample(frac=1.0, random_state=rng)
 
 def make_learning_curve(file_path):
+    print("File path: " + file_path)
+
     df = pd.read_csv(file_path)
 
     # arcBench-style CSVs usually have the label in the last column
