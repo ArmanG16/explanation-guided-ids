@@ -4,7 +4,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 
 from src.utils.Preprocessing_Func import preprocess_data
 
-def Preprocess_Beth():
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+INPUT_DIR = os.path.join(BASE_DIR, "data/unprocessed/bethdataset")
+OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/bethdataset")
+
+def Preprocess_Beth(): 
     dataset_files = [
         "labelled_2021may-ip-10-100-1-4.csv",
         "labelled_2021may-ip-10-100-1-4-dns.csv",
@@ -23,11 +27,7 @@ def Preprocess_Beth():
         "labelled_validation_data.csv"
     ]
 
-    input_dir = "data/unprocessed/bethdataset"
-    output_dir = "data/processed/bethdataset"
     for file in dataset_files:
-        in_path = os.path.join(input_dir, file)
-        out_path = os.path.join(output_dir, "processed_" + file)
+        in_path = os.path.join(INPUT_DIR, file)
+        out_path = os.path.join(OUTPUT_DIR, "processed_" + file)
         preprocess_data(in_path, out_path)
-
-Preprocess_Beth()
