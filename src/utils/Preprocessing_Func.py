@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_selection import VarianceThreshold
 import os
+from src.utils.Print_Helper import MyPrint
 
 def preprocess_data(input_path, output_path, variance_threshold=0.01):
     df = pd.read_csv(input_path)
@@ -44,29 +45,4 @@ def preprocess_data(input_path, output_path, variance_threshold=0.01):
     if y is not None:
         df[label_col] = y
     df.to_csv(output_path, index=False)
-    print(f"Saved {output_path} | Rows: {df.shape[0]} | Cols: {df.shape[1]}")
-
-dataset_files = [
-    "labelled_2021may-ip-10-100-1-4.csv",
-    "labelled_2021may-ip-10-100-1-4-dns.csv",
-    "labelled_2021may-ip-10-100-1-26.csv",
-    "labelled_2021may-ip-10-100-1-26-dns.csv",
-    "labelled_2021may-ip-10-100-1-95.csv",
-    "labelled_2021may-ip-10-100-1-95-dns.csv",
-    "labelled_2021may-ip-10-100-1-105.csv",
-    "labelled_2021may-ip-10-100-1-105-dns.csv",
-    "labelled_2021may-ip-10-100-1-186.csv",
-    "labelled_2021may-ip-10-100-1-186-dns.csv",
-    "labelled_2021may-ubuntu.csv",
-    "labelled_2021may-ubuntu-dns.csv",
-    "labelled_training_data.csv",
-    "labelled_testing_data.csv",
-    "labelled_validation_data.csv"
-]
-
-input_dir = "data/unprocessed/bethdataset"
-output_dir = "data/processed/bethdataset"
-for file in dataset_files:
-    in_path = os.path.join(input_dir, file)
-    out_path = os.path.join(output_dir, "processed_" + file)
-    preprocess_data(in_path, out_path)
+    MyPrint("Preprocessing_Func.py",  f"Saved {output_path} | Rows: {df.shape[0]} | Cols: {df.shape[1]}")
