@@ -30,4 +30,4 @@ def Preprocess_Beth():
         out_path = os.path.join(output_dir, "processed_" + file)
         preprocess_data(in_path, out_path)
 
-Preprocess_Beth();
+Preprocess_Beth()
