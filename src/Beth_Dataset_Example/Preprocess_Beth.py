@@ -30,4 +30,7 @@ def Preprocess_Beth():
     for file in dataset_files:
         in_path = os.path.join(INPUT_DIR, file)
         out_path = os.path.join(OUTPUT_DIR, "processed_" + file)
-        preprocess_data(in_path, out_path)
+        preprocess_data(in_path, out_path, "evil")
+
+if __name__ == "__main__":
+    Preprocess_Beth()

@@ -5,18 +5,16 @@ from sklearn.feature_selection import VarianceThreshold
 import os
 from src.utils.Print_Helper import MyPrint
 
-def preprocess_data(input_path, output_path, variance_threshold=0.01):
+def preprocess_data(input_path, output_path, class_column, variance_threshold=0.01):
     df = pd.read_csv(input_path)
-    label_col = None
-    for possible_label in ['Label', 'label', 'Attack', 'Class', 'target']:
-        if possible_label in df.columns:
-            label_col = possible_label
-            break
-    if label_col:
-        y = df[label_col]
-        df = df.drop(columns=[label_col])
+
+    if class_column in df.columns:
+        df = df.rename(columns={class_column: "class"})
+        label_col = df["class"].copy()
+        df = df.drop(columns=["class"]) #drop the class column to avoid it during processing
     else:
-        y = None
+        MyPrint("Preprocessing_Func.py",  "Error, class name " + class_column + " not found", error=True, line_num=15)
+        return
 
     df = df.dropna(axis=1, how='all')
     df = df.dropna(thresh=len(df) * 0.8, axis=1)
@@ -41,8 +39,9 @@ def preprocess_data(input_path, output_path, variance_threshold=0.01):
     df = df[kept_columns.tolist() + list(categorical)]
 
     df = df.loc[:, ~df.columns.duplicated()]
+    df = df.loc[:, df.nunique() > 1] # removes columns with the same value throughout
     df = df.dropna()
-    if y is not None:
-        df[label_col] = y
+    df["class"] = label_col #add back in the class column
+    df = df[[c for c in df.columns if c != 'class'] + ['class']]
     df.to_csv(output_path, index=False)
     MyPrint("Preprocessing_Func.py",  f"Saved {output_path} | Rows: {df.shape[0]} | Cols: {df.shape[1]}")
