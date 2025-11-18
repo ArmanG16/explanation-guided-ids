@@ -6,7 +6,8 @@ from src.utils.Preprocessing_Func import preprocess_data
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 INPUT_DIR = os.path.join(BASE_DIR, "data/unprocessed/bethdataset")
-OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/bethdataset")
+#OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/bethdataset/beth_preprocessed")
+OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/bethdataset/beth_preprocessed.csv")
 
 def Preprocess_Beth(): 
     dataset_files = [
@@ -26,11 +27,15 @@ def Preprocess_Beth():
         "labelled_testing_data.csv",
         "labelled_validation_data.csv"
     ]
+    
+    preprocess_data(INPUT_DIR, OUTPUT_DIR, "evil")
 
-    for file in dataset_files:
-        in_path = os.path.join(INPUT_DIR, file)
-        out_path = os.path.join(OUTPUT_DIR, "processed_" + file)
-        preprocess_data(in_path, out_path, "evil")
+    #kept_cols = None
+
+    #for file in dataset_files:
+    #    in_path = os.path.join(INPUT_DIR, file)
+    #    out_path = os.path.join(OUTPUT_DIR)
+    #    kept = preprocess_data(in_path, out_path, "evil", columns=kept_cols)
 
 if __name__ == "__main__":
     Preprocess_Beth()

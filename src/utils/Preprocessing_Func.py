@@ -3,21 +3,53 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_selection import VarianceThreshold
 import os
+import glob
 from src.utils.Print_Helper import MyPrint
 
-def preprocess_data(input_path, output_path, class_column, variance_threshold=0.01):
-    df = pd.read_csv(input_path)
+def preprocess_data(input_path, output_path, class_column, columns=None, variance_threshold=0.01):
+
+    csv_files = glob.glob(os.path.join(input_path, "*.csv"))
+    print(f"Number of CSV files found: {len(csv_files)}")
+
+    df_list = []
+    total_rows = 0
+
+    for file in csv_files:
+        temp_df = pd.read_csv(file)
+        df_list.append(temp_df)
+        total_rows += len(temp_df)
+
+    df = pd.concat(df_list, ignore_index=True)
+
+    if (total_rows > 0):
+        MyPrint("Preprocessing_Func.py",  "Creating a processed file with " + str(total_rows) + " rows at input path: " + input_path)
+    else:
+        MyPrint("Preprocessing_Func.py",  "Error, no rows found in input path: " + input_path, error=True, line_num=24)
+        return
 
     if class_column in df.columns:
         df = df.rename(columns={class_column: "class"})
         label_col = df["class"].copy()
         df = df.drop(columns=["class"]) #drop the class column to avoid it during processing
     else:
-        MyPrint("Preprocessing_Func.py",  "Error, class name " + class_column + " not found", error=True, line_num=15)
+        MyPrint("Preprocessing_Func.py",  "Error, class name " + class_column + " not found", error=True, line_num=16)
         return
+
+    if columns is not None:
+        allowed_cols = [c for c in columns if c in df.columns]
+        missing = set(columns) - set(allowed_cols)
+        if missing:
+            MyPrint("Preprocessing_Func.py", f"Warning: columns not found and skipped: {missing}", error=True, line_num=22)
+        df = df[allowed_cols]
 
     df = df.dropna(axis=1, how='all')
     df = df.dropna(thresh=len(df) * 0.8, axis=1)
+
+    # Drop high-cardinality / near-unique columns that pyIDS cannot handle
+    high_card_cols = [col for col in df.columns if df[col].nunique() / len(df) > 0.9]
+    df = df.drop(columns=high_card_cols)
+    MyPrint("Preprocessing_Func.py", f"Dropped high-cardinality columns: {high_card_cols}")
+
     for col in df.columns:
         if df[col].dtype == 'object':
             df[col] = df[col].fillna(df[col].mode()[0])
@@ -45,3 +77,7 @@ def preprocess_data(input_path, output_path, class_column, variance_threshold=0.
     df = df[[c for c in df.columns if c != 'class'] + ['class']]
     df.to_csv(output_path, index=False)
     MyPrint("Preprocessing_Func.py",  f"Saved {output_path} | Rows: {df.shape[0]} | Cols: {df.shape[1]}")
+    
+    #return the array and the names of the column
+    kept_columns = [col for col in df.columns if col != "class"]
+    return df, kept_columns
