@@ -9,7 +9,7 @@ from src.utils.Print_Helper import MyPrint
 def preprocess_data(input_path, output_path, class_column, columns=None, variance_threshold=0.01):
 
     csv_files = glob.glob(os.path.join(input_path, "*.csv"))
-    print(f"Number of CSV files found: {len(csv_files)}")
+    MyPrint("Preprocessing_Func.py", f"Number of CSV files found: {len(csv_files)}")
 
     df_list = []
     total_rows = 0
@@ -22,9 +22,9 @@ def preprocess_data(input_path, output_path, class_column, columns=None, varianc
     df = pd.concat(df_list, ignore_index=True)
 
     if (total_rows > 0):
-        MyPrint("Preprocessing_Func.py",  "Creating a processed file with " + str(total_rows) + " rows at input path: " + input_path)
+        MyPrint("Preprocessing_Func.py", "Creating a processed file with " + str(total_rows) + " rows at input path: " + input_path)
     else:
-        MyPrint("Preprocessing_Func.py",  "Error, no rows found in input path: " + input_path, error=True, line_num=24)
+        MyPrint("Preprocessing_Func.py", "Error, no rows found in input path: " + input_path, error=True, line_num=24)
         return
 
     if class_column in df.columns:
