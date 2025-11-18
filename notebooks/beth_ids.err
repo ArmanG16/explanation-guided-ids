@@ -1,0 +1,24 @@
+++ hostname
++ echo 'HOST: compute-3-01'
+++ pwd
++ echo 'PWD: /home/nsewell/explanation-guided-ids/notebooks'
++ ls
++ cd /home/nsewell/explanation-guided-ids
+++ pwd
++ echo 'PWD after cd: /home/nsewell/explanation-guided-ids'
++ ls
++ /home/nsewell/py312/bin/python --version
++ /home/nsewell/py312/bin/python src/Beth_Dataset_Example/train_beth.py
+/home/nsewell/py312/lib/python3.12/site-packages/pyarc/qcba/data_structures/quant_dataset.py:44: FutureWarning: Setting an item of incompatible dtype is deprecated and will raise in a future error of pandas. Value '0         nan
+1         nan
+2         nan
+3         nan
+4         nan
+         ... 
+249995    0.0
+249996    0.0
+249997    0.0
+249998    0.0
+249999    0.0
+Name: hostName, Length: 250000, dtype: object' has dtype incompatible with float64, please explicitly cast to a compatible dtype first.
+  self.__dataframe.iloc[:,-1] = self.__dataframe.iloc[:,-1].astype(str)

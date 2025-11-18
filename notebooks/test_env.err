@@ -1,0 +1,10 @@
+++ hostname
++ echo 'HOST: compute-2-09'
+++ whoami
++ echo 'WHOAMI: nsewell'
+++ pwd
++ echo 'PWD: /home/nsewell/explanation-guided-ids/notebooks'
++ which python
++ python --version
++ ls -l /home/nsewell/py312/bin/python
++ /home/nsewell/py312/bin/python -c 'import sys; print('\''VENV PY OK'\'', sys.version)'

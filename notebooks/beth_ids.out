@@ -1,0 +1,116 @@
+HOST: compute-3-01
+PWD: /home/nsewell/explanation-guided-ids/notebooks
+beth_ids.err
+beth_ids.out
+Beth_Notebook.ipynb
+run_beth.slurm
+test_env.err
+test_env.out
+test_env.slurm
+PWD after cd: /home/nsewell/explanation-guided-ids
+data
+LICENSE
+notebooks
+pyIDS
+README.md
+src
+tests
+todo_list.txt
+venvs
+Python 3.12.8
+Starting IDS training on 1,000,000 rows...
+Number of CSV files found: 15
+Total rows loaded: 250000
+
+--- Learned Decision Rules ---
+Mined CARs Count: 50
+
+
+--- Learned Decision Rules ---
+Total Rules Selected by IDS: 20
+
+
+--- Simplified IDS Rule Summaries ---
+Rule 1:
+  IF {'returnValue': '-0.0525915338276553', 'argsNum': '-1.2969535567058752'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.284, Confidence: 1.000, F1: 0.000
+Rule 2:
+  IF {'userId': '-0.1223478740973428', 'argsNum': '0.9459801194364638'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.521, Confidence: 1.000, F1: 0.000
+Rule 3:
+  IF {'evil': '-0.095593105558683', 'eventName': '-1.267608196993744'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.272, Confidence: 1.000, F1: 0.000
+Rule 4:
+  IF {'evil': '-0.095593105558683', 'argsNum': '0.9459801194364638'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.523, Confidence: 1.000, F1: 0.000
+Rule 5:
+  IF {'eventId': '-0.1874307147516642', 'eventName': '0.4524809766675854'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.271, Confidence: 1.000, F1: 0.000
+Rule 6:
+  IF {'argsNum': '0.9459801194364638'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.528, Confidence: 1.000, F1: 0.000
+Rule 7:
+  IF {'eventId': '-0.8056244244633546', 'argsNum': '-1.2969535567058752'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.275, Confidence: 1.000, F1: 0.000
+Rule 8:
+  IF {'returnValue': '-0.0525915338276553', 'eventId': '-0.8056244244633546'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.275, Confidence: 1.000, F1: 0.000
+Rule 9:
+  IF {'sus': '-0.575229999766872'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.860, Confidence: 1.000, F1: 0.000
+Rule 10:
+  IF {'parentProcessId': '1.2568237466133472', 'evil': '-0.095593105558683'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.274, Confidence: 1.000, F1: 0.000
+Rule 11:
+  IF {'userId': '-0.1223478740973428', 'argsNum': '-1.2969535567058752'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.278, Confidence: 1.000, F1: 0.000
+Rule 12:
+  IF {'returnValue': '-0.0525915338276553', 'userId': '-0.1223478740973428'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.686, Confidence: 1.000, F1: 0.000
+Rule 13:
+  IF {'evil': '-0.095593105558683', 'eventName': '0.4524809766675854'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.267, Confidence: 1.000, F1: 0.000
+Rule 14:
+  IF {'userId': '-0.1223478740973428'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.971, Confidence: 1.000, F1: 0.000
+Rule 15:
+  IF {'eventName': '-1.267608196993744', 'argsNum': '-1.2969535567058752'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.275, Confidence: 1.000, F1: 0.000
+Rule 16:
+  IF {'returnValue': '-0.0525915338276553'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.704, Confidence: 1.000, F1: 0.000
+Rule 17:
+  IF {'eventId': '-0.8056244244633546', 'userId': '-0.1223478740973428'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.270, Confidence: 1.000, F1: 0.000
+Rule 18:
+  IF {'returnValue': '-0.0525915338276553', 'argsNum': '0.9459801194364638'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.257, Confidence: 1.000, F1: 0.000
+Rule 19:
+  IF {'sus': '-0.575229999766872', 'processName': '-0.2825813244561896'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.772, Confidence: 1.000, F1: 0.000
+Rule 20:
+  IF {'processName': '-0.2825813244561896', 'argsNum': '0.9459801194364638'}
+  THEN Consequent{('hostName', 'np.float64(0.0)')}
+  Support: 0.455, Confidence: 1.000, F1: 0.000
+
+Accuracy Score: 0.998924
+Training complete.

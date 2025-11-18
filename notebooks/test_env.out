@@ -1,0 +1,7 @@
+HOST: compute-2-09
+WHOAMI: nsewell
+PWD: /home/nsewell/explanation-guided-ids/notebooks
+/usr/bin/python
+Python 3.8.10
+lrwxrwxrwx 1 nsewell nsewell 120 Nov 17 19:03 /home/nsewell/py312/bin/python -> /cm/shared/spack/opt/spack/linux-ubuntu20.04-x86_64/gcc-13.2.0/python-3.12.8-yju4gyvx5p3cazhjhdm3ue5ad22hrykg/bin/python
+VENV PY OK 3.12.8 (main, Dec 13 2024, 12:16:38) [GCC 13.2.0]
