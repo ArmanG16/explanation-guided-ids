@@ -9,11 +9,13 @@ sys.path.insert(0, os.path.join(BASE_DIR, "pyIDS"))
 data_dir = os.path.join(BASE_DIR, "data/processed/UNR-IDD_preprocessed.csv")
 cars_dir = os.path.join(BASE_DIR, "data/cars")
 output_path = os.path.join(BASE_DIR, "data/rules/UNR-IDD_rules.csv")
+lambdas_path = os.path.join(BASE_DIR, "data/lambdas/UNR-IDD_best_lambdas.csv")
 cars_csv_name = "UNR-IDD.csv"
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
 from src.pyIDS_Functions.Training_Func import Train
+from src.utils.Optimizing_Lambdas import Optimize_Lambdas
 
 def UNR_IDD_Train(max_rows):
 
@@ -21,8 +23,7 @@ def UNR_IDD_Train(max_rows):
 
     cars = Mine_Cars(50, df, cars_dir + "/" + cars_csv_name)
 
-    lambda_array = [1, 1, 1, 1, 1, 1, 1]
-
+    lambda_array = Optimize_Lambdas(algorithm="SLS", cars=cars, data_dir=data_dir, max_rows=max_rows, output_path=lambdas_path, precision=50, iterations=3)
     Train("SLS", lambda_array, cars, df, output_path)
 
 if __name__ == "__main__":
