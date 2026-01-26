@@ -16,15 +16,22 @@ from pyarc.qcba.data_structures import QuantitativeDataFrame
 galgorithm = None
 gquant_df = None
 gcars = None
+glambdas = None
 
 def fmax(lambda_dict):
+    global glambdas, gcars, gquant_df, galgorithm
     ids = IDS(galgorithm)
     ids.fit(class_association_rules=gcars, quant_dataframe=gquant_df, lambda_array=list(lambda_dict.values()))
     auc = ids.score_auc(gquant_df)
+    if glambdas is None:
+        glambdas = [lambda_dict.copy()]
+    else:
+        glambdas.append(lambda_dict.copy())
     MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
     return auc
 
 def Optimize_Lambdas(algorithm, cars, data_dir, max_rows, output_path, precision, iterations):
+    MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
     gcars = cars
@@ -45,7 +52,7 @@ def Optimize_Lambdas(algorithm, cars, data_dir, max_rows, output_path, precision
         ternary_search_precision=precision,
         max_iterations=iterations
     )
-
+    global glambdas
     best_lambdas = cord_asc.fit()
-    best_lambdas.to_csv(output_path, index=False)
+    pd.DataFrame(glambdas).to_csv(output_path, index=False) # Save all tried lambda combinations
     return best_lambdas
