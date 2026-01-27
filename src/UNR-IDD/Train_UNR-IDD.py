@@ -16,12 +16,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
 from src.pyIDS_Functions.Training_Func import Train
 from src.utils.Optimizing_Lambdas import Optimize_Lambdas
+from src.utils.Print_Helper import MyPrint
 
 def UNR_IDD_Train(max_rows):
+    MyPrint("Train_UNR-IDD", "Beginning to Train UNR-IDD")
 
     df = pd.read_csv(data_dir, nrows=max_rows)
 
     cars = Mine_Cars(50, df, cars_dir + "/" + cars_csv_name)
+
+    lambda_array = Optimize_Lambdas(algorithm="SLS", cars=cars, data_dir=data_dir, max_rows=max_rows, output_path=lambdas_path, precision=200, iterations=2)
 
     lambda_array = Optimize_Lambdas(algorithm="SLS", cars=cars, data_dir=data_dir, max_rows=max_rows, output_path=lambdas_path, precision=50, iterations=3)
     Train("SLS", lambda_array, cars, df, output_path)

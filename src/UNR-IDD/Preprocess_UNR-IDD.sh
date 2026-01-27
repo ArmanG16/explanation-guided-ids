@@ -8,4 +8,4 @@
 
 echo "Preprocessing UNR-IDD dataset..."
 source /home/mrcloutier/env/bin/activate
-python Preprocess_UNR-IDD.py
+python -u Preprocess_UNR-IDD.py
