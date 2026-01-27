@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -N 1          # 
+#SBATCH -n 2          # 
+#SBATCH --mem=8g      # 
+#SBATCH -J "Train on UNR-IDD"  # 
+#SBATCH -p short      # 
+#SBATCH -t 12:00:00   # 
+
+echo "Training on UNR-IDD..."
+source /home/mrcloutier/env/bin/activate
+python Train_UNR-IDD.py
