@@ -17,6 +17,7 @@ galgorithm = None
 gquant_df = None
 gcars = None
 glambdas = None
+gauc_list = None
 
 def fmax(lambda_dict):
     global glambdas, gcars, gquant_df, galgorithm
@@ -25,8 +26,10 @@ def fmax(lambda_dict):
     auc = ids.score_auc(gquant_df)
     if glambdas is None:
         glambdas = [lambda_dict.copy()]
+        gauc_list = [auc]
     else:
         glambdas.append(lambda_dict.copy())
+        gauc_list = [auc]
     MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
     return auc
 
@@ -54,5 +57,9 @@ def Optimize_Lambdas(algorithm, cars, data_dir, max_rows, output_path, precision
     )
     global glambdas
     best_lambdas = cord_asc.fit()
-    pd.DataFrame(glambdas).to_csv(output_path, index=False) # Save all tried lambda combinations
+
+    df_to_save = pd.DataFrame(glambdas)
+    df_to_save.insert(0, "AUC", gauc_list)
+    df_to_save.to_csv(output_path, index=False)
+
     return best_lambdas
