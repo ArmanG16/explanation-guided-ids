@@ -33,12 +33,11 @@ def fmax(lambda_dict):
     MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
     return auc
 
-def Optimize_Lambdas(algorithm, cars, data_dir, max_rows, output_path, precision, iterations):
+def Optimize_Lambdas(algorithm, cars, df, max_rows, output_path, precision, iterations):
     MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
     gcars = cars
-    df = CSV_to_DF(data_dir, max_rows=max_rows)
     df["class"] = df["class"].astype(str)
     gquant_df = QuantitativeDataFrame(df)
     cord_asc = CoordinateAscent(
