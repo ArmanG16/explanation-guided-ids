@@ -13,4 +13,4 @@ def MyPrint(file_name, message, line_num=-1, error=False, success=False):
 
     timestamp = time.strftime("%H:%M:%S")
 
-    print(color_change + timestamp + ", " + file_name + ": " + line_num_msg + message + "\033[0m")
+    print(color_change + timestamp + ", " + file_name + ": " + line_num_msg + message + "\033[0m" if color_change == "" else "")
