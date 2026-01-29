@@ -34,19 +34,18 @@ def UNR_IDD_Train(max_rows, val_fraction = 0.2, random_state=42):
         random_state=random_state
     )
 
-    cars = Mine_Cars(max_rows, 50, train_df, cars_dir + "/" + cars_csv_name)
+    cars = Mine_Cars(100, train_df, cars_dir + "/" + cars_csv_name)
 
     lambda_array = Optimize_Lambdas(
         algorithm="SLS",
         cars=cars,
         df=val_df,
-        max_rows=None,
         output_path=lambdas_path,
-        precision=300,
-        iterations=1
+        precision=50,
+        iterations=3
     )
 
-    Train("SLS", lambda_array, cars, max_rows, train_df, output_path)
+    Train("SLS", lambda_array, cars, train_df, output_path)
 
     MyPrint("Train_UNR-IDD", "Training complete!")
 

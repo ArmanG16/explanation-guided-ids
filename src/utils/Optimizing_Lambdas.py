@@ -33,7 +33,7 @@ def fmax(lambda_dict):
     MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
     return auc
 
-def Optimize_Lambdas(algorithm, cars, df, max_rows, output_path, precision, iterations):
+def Optimize_Lambdas(algorithm, cars, df, output_path, precision, iterations):
     MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
