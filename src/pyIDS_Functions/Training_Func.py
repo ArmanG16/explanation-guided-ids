@@ -8,8 +8,7 @@ from pyarc.qcba.data_structures import QuantitativeDataFrame
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from pyids.algorithms.ids import IDS
 
-def Train(algorithm, lambda_array, cars, max_rows, data_dir, output_path):
-    df = CSV_to_DF(data_dir, max_rows=max_rows)
+def Train(algorithm, lambda_array, cars, df, output_path):
     df["class"] = df["class"].astype(str)
     quant_dataframe = QuantitativeDataFrame(df)
 

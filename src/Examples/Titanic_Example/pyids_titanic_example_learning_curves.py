@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ---- Make sure pyIDS is importable (adjust path if needed) ----
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../pyIDS")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../pyIDS")))
 
 from pyids.algorithms.ids_classifier import mine_CARs
 from pyids.algorithms.ids import IDS

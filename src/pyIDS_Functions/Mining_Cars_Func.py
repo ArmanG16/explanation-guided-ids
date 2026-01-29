@@ -35,27 +35,7 @@ def save_cars_to_csv(cars, output_directory):
     
     MyPrint("Mining_Cars_Func", f"Saved {len(cars)} CARs to {output_directory}")
 
-def Mine_Cars(max_rows, rule_cutoff, data_dir, output_dir):
-    csv_files = glob.glob(os.path.join(data_dir, "*.csv"))
-    MyPrint("Mining_Cars_Func", f"Number of CSV files found: {len(csv_files)}")
-
-    df_list = []
-    total_rows = 0
-    for file in csv_files:
-        temp_df = pd.read_csv(file)
-        remaining_rows = max_rows - total_rows
-        if remaining_rows <= 0:
-            break
-        if len(temp_df) > remaining_rows:
-            temp_df = temp_df.head(remaining_rows)
-        df_list.append(temp_df)
-        total_rows += len(temp_df)
-
-    if (total_rows == 0):
-        MyPrint("Mining_Cars_Func", "Error, no rows found in data directory: " + data_dir, error=True, line_num=30)
-        return
-
-    df = CSV_to_DF(data_dir, max_rows=max_rows)
+def Mine_Cars(rule_cutoff, df, output_dir):
     df['class'] = df['class'].astype(str)
     MyPrint("Mining_Cars_Func", f"Total rows loaded: {len(df)}")
 
