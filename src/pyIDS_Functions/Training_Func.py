@@ -9,7 +9,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 from pyids.algorithms.ids import IDS
 
 def Train(algorithm, lambda_array, cars, df, output_path):
-    df["class"] = df["class"].astype(str)
     quant_dataframe = QuantitativeDataFrame(df)
 
     MyPrint("Training_Func", "Beginning training with pyIDS...")

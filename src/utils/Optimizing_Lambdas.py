@@ -20,7 +20,7 @@ glambdas = None
 gauc_list = None
 
 def fmax(lambda_dict):
-    global glambdas, gcars, gquant_df, galgorithm
+    global glambdas, gcars, gquant_df, galgorithm, gauc_list
     ids = IDS(galgorithm)
     ids.fit(class_association_rules=gcars, quant_dataframe=gquant_df, lambda_array=list(lambda_dict.values()))
     auc = ids.score_auc(gquant_df)
@@ -29,7 +29,7 @@ def fmax(lambda_dict):
         gauc_list = [auc]
     else:
         glambdas.append(lambda_dict.copy())
-        gauc_list = [auc]
+        gauc_list.append(auc)
     MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
     return auc
 
@@ -38,7 +38,6 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, precision, iterations):
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
     gcars = cars
-    df["class"] = df["class"].astype(str)
     gquant_df = QuantitativeDataFrame(df)
     cord_asc = CoordinateAscent(
         func=fmax,

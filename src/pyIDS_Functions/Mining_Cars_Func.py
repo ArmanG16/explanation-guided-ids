@@ -36,7 +36,6 @@ def save_cars_to_csv(cars, output_directory):
     MyPrint("Mining_Cars_Func", f"Saved {len(cars)} CARs to {output_directory}")
 
 def Mine_Cars(rule_cutoff, df, output_dir):
-    df['class'] = df['class'].astype(str)
     MyPrint("Mining_Cars_Func", f"Total rows loaded: {len(df)}")
 
     cars = mine_CARs(df, rule_cutoff=rule_cutoff)
