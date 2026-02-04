@@ -16,7 +16,7 @@ lambdas_path = os.path.join(BASE_DIR, "data/lambdas/titanic_best_lambdas.csv")
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
 from src.pyIDS_Functions.Training_Func import Train
-from src.utils.Optimizing_Lambdas import Optimize_Lambdas
+from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
 from src.utils.Print_Helper import MyPrint
 
 def Titanic_Lambdas_Train(max_rows, val_fraction = 0.2, random_state=42):
