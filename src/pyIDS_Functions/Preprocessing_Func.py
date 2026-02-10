@@ -6,7 +6,7 @@ import os
 import glob
 from src.utils.Print_Helper import MyPrint
 
-def preprocess_data(input_path, output_path, class_column, columns=None, variance_threshold=0.01):
+def preprocess_data(input_path, output_path, class_column, numerical=True, columns=None, variance_threshold=0.01):
 
     csv_files = glob.glob(os.path.join(input_path, "*.csv"))
     MyPrint("Preprocessing_Func.py", f"Number of CSV files found: {len(csv_files)}")
@@ -56,23 +56,24 @@ def preprocess_data(input_path, output_path, class_column, columns=None, varianc
         else:
             df[col] = df[col].fillna(df[col].mean())
 
-    categorical = df.select_dtypes(include=['object']).columns
-    for col in categorical:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col].astype(str))
+    if (numerical):
+        categorical = df.select_dtypes(include=['object']).columns
+        for col in categorical:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col].astype(str))
 
-    numeric = df.select_dtypes(include=[np.number]).columns
-    scaler = StandardScaler()
-    df[numeric] = scaler.fit_transform(df[numeric])
+        numeric = df.select_dtypes(include=[np.number]).columns
+        scaler = StandardScaler()
+        df[numeric] = scaler.fit_transform(df[numeric])
 
-    selector = VarianceThreshold(threshold=variance_threshold)
-    reduced = selector.fit_transform(df[numeric])
-    kept_columns = numeric[selector.get_support(indices=True)]
-    df = df[kept_columns.tolist() + list(categorical)]
+        selector = VarianceThreshold(threshold=variance_threshold)
+        reduced = selector.fit_transform(df[numeric])
+        kept_columns = numeric[selector.get_support(indices=True)]
+        df = df[kept_columns.tolist() + list(categorical)]
 
-    df = df.loc[:, ~df.columns.duplicated()]
-    df = df.loc[:, df.nunique() > 1] # removes columns with the same value throughout
-    df = df.dropna()
+        df = df.loc[:, ~df.columns.duplicated()]
+        df = df.loc[:, df.nunique() > 1] # removes columns with the same value throughout
+        df = df.dropna()
     df["class"] = label_col #add back in the class column
     df = df[[c for c in df.columns if c != 'class'] + ['class']]
     df.to_csv(output_path, index=False)
