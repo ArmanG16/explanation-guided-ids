@@ -4,6 +4,7 @@ from src.utils.Print_Helper import MyPrint
 from src.utils.CSV_Files_To_DataFrame import CSV_to_DF
 import pandas as pd
 from pyarc.qcba.data_structures import QuantitativeDataFrame
+from concurrent.futures import ProcessPoolExecutor
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
@@ -18,8 +19,9 @@ gquant_df = None
 gcars = None
 glambdas = None
 gauc_list = None
+cord_asc = None
 
-def fmax(lambda_dict):
+def fmax(lambda_dict, arg_name = None):
     global glambdas, gcars, gquant_df, galgorithm, gauc_list
     ids = IDS(galgorithm)
     ids.fit(class_association_rules=gcars, quant_dataframe=gquant_df, lambda_array=list(lambda_dict.values()))
@@ -30,8 +32,14 @@ def fmax(lambda_dict):
     else:
         glambdas.append(lambda_dict.copy())
         gauc_list.append(auc)
-    MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
+    if arg_name is None:
+        MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
+    else:
+        MyPrint("Optimizing_Lambdas", "AUC: " + str(auc) + " for lambdas: " + str(lambda_dict) + ", indiviudally working on lambda: " + arg_name)
     return auc
+
+def fit_lambda(arg_name):
+    return arg_name, cord_asc.fit_1lambda(arg_name)
 
 def Optimize_Lambdas(algorithm, cars, df, output_path, precision, iterations):
     MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
@@ -39,21 +47,35 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, precision, iterations):
     galgorithm = algorithm
     gcars = cars
     gquant_df = QuantitativeDataFrame(df)
+
+    func_args_ranges=dict(
+    l1=(1, 1000),
+    l2=(1, 1000),
+    l3=(1, 1000),
+    l4=(1, 1000),
+    l5=(1, 1000),
+    l6=(1, 1000),
+    l7=(1, 1000)
+    )
+
+    global cord_asc
     cord_asc = CoordinateAscent(
         func=fmax,
-        func_args_ranges=dict(
-            l1=(1, 1000),
-            l2=(1, 1000),
-            l3=(1, 1000),
-            l4=(1, 1000),
-            l5=(1, 1000),
-            l6=(1, 1000),
-            l7=(1, 1000)
-        ),
+        func_args_ranges=func_args_ranges,
         ternary_search_precision=precision,
         max_iterations=iterations
     )
     global glambdas
+
+    best_lambdas_initial = {}
+    lambda_names = list(func_args_ranges.keys())
+
+    with ProcessPoolExecutor(max_workers=7) as executor:
+        for arg_name, best_val in executor.map(fit_lambda, lambda_names):
+            best_lambdas_initial[arg_name] = best_val
+
+    MyPrint("Optimizing_Lambdas", f"Best initial lambdas (parallel): {best_lambdas_initial}")
+
     best_lambdas = cord_asc.fit()
 
     df_to_save = pd.DataFrame(glambdas)
