@@ -27,13 +27,7 @@ def preprocess_data(input_path, output_path, class_column, columns=None, varianc
         MyPrint("Preprocessing_Func.py", "Error, no rows found in input path: " + input_path, error=True, line_num=24)
         return
 
-    if class_column in df.columns:
-        df = df.rename(columns={class_column: "class"})
-        label_col = df["class"].copy()
-        df = df.drop(columns=["class"]) #drop the class column to avoid it during processing
-    else:
-        MyPrint("Preprocessing_Func.py",  "Error, class name " + class_column + " not found", error=True, line_num=16)
-        return
+    df = df.rename(columns={class_column: "class"})
 
     if columns is not None:
         allowed_cols = [c for c in columns if c in df.columns]
@@ -70,11 +64,7 @@ def preprocess_data(input_path, output_path, class_column, columns=None, varianc
     kept_columns = numeric[selector.get_support(indices=True)]
     df = df[kept_columns.tolist() + list(categorical)]
 
-    df = df.loc[:, ~df.columns.duplicated()]
-    df = df.loc[:, df.nunique() > 1] # removes columns with the same value throughout
-    df = df.dropna()
-    df["class"] = label_col #add back in the class column
-    df = df[[c for c in df.columns if c != 'class'] + ['class']]
+    df = df[[c for c in df.columns if c != 'class'] + ['class']] # make the class column the last column
     df.to_csv(output_path, index=False)
     MyPrint("Preprocessing_Func.py",  f"Saved {output_path} | Rows: {df.shape[0]} | Cols: {df.shape[1]}")
     
