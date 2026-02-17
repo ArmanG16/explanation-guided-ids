@@ -32,7 +32,7 @@ def UNR_IDD_Train(max_rows, val_fraction = 0.2, random_state=42):
         random_state=random_state
     )
 
-    cars = Mine_Cars(100, train_df, cars_dir)
+    cars = Mine_Cars(50, train_df, cars_dir)
 
     lambda_array = Optimize_Lambdas(
         algorithm="SLS",
