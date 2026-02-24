@@ -7,5 +7,5 @@
 #SBATCH -t 12:00:00   # 
 
 echo "Training on UNR-IDD..."
-source /home/mrcloutier/env/bin/activate
+source /home/csgilbert/env/bin/activate
 python -u Train_UNR-IDD.py

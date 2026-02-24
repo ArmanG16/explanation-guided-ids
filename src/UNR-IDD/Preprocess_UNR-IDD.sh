@@ -7,5 +7,5 @@
 #SBATCH -t 12:00:00   # 
 
 echo "Preprocessing UNR-IDD dataset..."
-source /home/mrcloutier/env/bin/activate
+source /home/csgilbert/env/bin/activate
 python -u Preprocess_UNR-IDD.py
