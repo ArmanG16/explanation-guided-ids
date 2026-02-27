@@ -5,6 +5,8 @@ from src.utils.Multithreading_Helper import Worker_Count
 import pandas as pd
 from pyarc.qcba.data_structures import QuantitativeDataFrame
 import multiprocessing as mp
+import itertools
+import random
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -12,13 +14,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 from pyids.algorithms.ids_classifier import mine_CARs
 from pyids.algorithms.ids import IDS
 from pyids.model_selection.coordinate_ascent import CoordinateAscent
+from pyids.model_selection.random_search import RandomSearch
+from pyids.model_selection.grid_search import GridSearch
 
 from pyarc.qcba.data_structures import QuantitativeDataFrame
 
 galgorithm = None
 gquant_df = None
 gcars = None
-glambdas = None
 gauc_list = None
 cord_asc_individual = None
 
@@ -40,23 +43,17 @@ def fmax_individual(lambda_dict):
     return auc
 
 def fmax_net(lambda_dict):
-    global glambdas, gcars, gquant_df, galgorithm, gauc_list
+    global gcars, gquant_df, galgorithm, gauc_list
     ids = IDS(galgorithm)
     ids.fit(class_association_rules=gcars, quant_dataframe=gquant_df, lambda_array=list(lambda_dict.values()))
     auc = ids.score_auc(gquant_df)
-    if glambdas is None:
-        glambdas = [lambda_dict.copy()]
-        gauc_list = [auc]
-    else:
-        glambdas.append(lambda_dict.copy())
-        gauc_list.append(auc)
     MyPrint("Optimizing_Lambdas", "Net, AUC: " + str(auc) + " for lambdas: " + str(lambda_dict))
     return auc
 
 def fit_lambda(arg_name):
     return arg_name, cord_asc_individual.fit_1lambda(arg_name)
 
-def Optimize_Lambdas(algorithm, cars, df, output_path, precision, iterations):
+def Optimize_Lambdas(algorithm, cars, df, output_path, iterations, precision=50, search_type="coordinate", grid_step=200):
     MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
@@ -73,79 +70,109 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, precision, iterations):
     l7=(1, 1000)
     )
 
-    global cord_asc_individual
-    cord_asc_individual = CoordinateAscent(
-        func=fmax_individual,
-        func_args_ranges=func_args_ranges,
-        ternary_search_precision=precision,
-        max_iterations=iterations
-    )
+    if (search_type == "coordinate"):
+        MyPrint("Optimizing_Lambdas", "Using coordinate ascent for optimization with precision " + str(precision) + " and iterations " + str(iterations) + "...")
+        
+        global cord_asc_individual
+        cord_asc_individual = CoordinateAscent(
+            func=fmax_individual,
+            func_args_ranges=func_args_ranges,
+            ternary_search_precision=precision,
+            max_iterations=iterations
+        )
 
-    best_lambdas_initial = {}
-    lambda_names = list(func_args_ranges.keys())
+        best_lambdas_initial = {}
+        lambda_names = list(func_args_ranges.keys())
 
+        
+        num_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", mp.cpu_count()))
+
+        MyPrint("Optimizing_Lambdas", "Found " + str(num_workers) + " workers for parallel optimization.")
+
+        mp.set_start_method("fork", force=True)
+
+        #Prepare OS
+        old_env = {
+            "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
+            "OPENBLAS_NUM_THREADS": os.environ.get("OPENBLAS_NUM_THREADS"),
+            "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
+            "VECLIB_MAXIMUM_THREADS": os.environ.get("VECLIB_MAXIMUM_THREADS"),
+            "NUMEXPR_NUM_THREADS": os.environ.get("NUMEXPR_NUM_THREADS"),
+        }
+
+        #Limit threads for each process
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["OPENBLAS_NUM_THREADS"] = "1"
+        os.environ["MKL_NUM_THREADS"] = "1"
+        os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+        os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+        with mp.Pool(
+            processes=num_workers,
+            initializer=init_worker,
+            initargs=(cars, gquant_df, algorithm)
+        ) as pool:
+
+            results = pool.map(fit_lambda, lambda_names)
+
+        for arg_name, best_val in results:
+            best_lambdas_initial[arg_name] = best_val
+
+        MyPrint("Optimizing_Lambdas", f"Best individual lambdas: {best_lambdas_initial}", success=True)
+
+        #Bring back old environment
+        for key, value in old_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+        search_radius = 100
+
+        func_args_ranges_net = {
+            k: (max(1, int(v - search_radius)), int(v + search_radius))
+            for k, v in best_lambdas_initial.items()
+        }
+
+        cord_asc_net = CoordinateAscent(
+            func=fmax_net,
+            func_args_ranges=func_args_ranges_net,
+            ternary_search_precision=precision,
+            max_iterations=iterations
+        )
+
+        best_lambdas = cord_asc_net.fit()
+
+        return best_lambdas
     
-    num_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", mp.cpu_count()))
+    elif (search_type == "grid"):
+        MyPrint("Optimizing_Lambdas", "Using grid search for optimization")
+        
+        param_grid = {
+            k: range(v[0], v[1] + 1, grid_step)
+            for k, v in func_args_ranges.items()
+        }       
 
-    MyPrint("Optimizing_Lambdas", "Found " + str(num_workers) + " workers for parallel optimization.")
+        grid = GridSearch(
+            func=fmax_net,
+            func_args_spaces=param_grid,
+            max_iterations=iterations
+        )
 
-    mp.set_start_method("fork", force=True)
+        best_lambdas = grid.fit()
 
-    #Prepare OS
-    old_env = {
-        "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
-        "OPENBLAS_NUM_THREADS": os.environ.get("OPENBLAS_NUM_THREADS"),
-        "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
-        "VECLIB_MAXIMUM_THREADS": os.environ.get("VECLIB_MAXIMUM_THREADS"),
-        "NUMEXPR_NUM_THREADS": os.environ.get("NUMEXPR_NUM_THREADS"),
-    }
 
-    #Limit threads for each process
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ["OPENBLAS_NUM_THREADS"] = "1"
-    os.environ["MKL_NUM_THREADS"] = "1"
-    os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-    os.environ["NUMEXPR_NUM_THREADS"] = "1"
+        return best_lambdas
+    
+    elif (search_type == "random"):
+        MyPrint("Optimizing_Lambdas", "Using random search for optimization with " + str(iterations) + " samples")
 
-    with mp.Pool(
-        processes=num_workers,
-        initializer=init_worker,
-        initargs=(cars, gquant_df, algorithm)
-    ) as pool:
+        random_search = RandomSearch(
+            func=fmax_net,
+            func_args_ranges=func_args_ranges,
+            max_iterations=iterations
+        )
+        best_lambdas = random_search.fit()
 
-        results = pool.map(fit_lambda, lambda_names)
-
-    for arg_name, best_val in results:
-        best_lambdas_initial[arg_name] = best_val
-
-    MyPrint("Optimizing_Lambdas", f"Best individual lambdas: {best_lambdas_initial}", success=True)
-
-    #Bring back old environment
-    for key, value in old_env.items():
-        if value is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = value
-
-    search_radius = 100
-
-    func_args_ranges_net = {
-        k: (max(1, int(v - search_radius)), int(v + search_radius))
-        for k, v in best_lambdas_initial.items()
-    }
-
-    cord_asc_net = CoordinateAscent(
-        func=fmax_net,
-        func_args_ranges=func_args_ranges_net,
-        ternary_search_precision=precision,
-        max_iterations=iterations
-    )
-
-    global glambdas
-    best_lambdas = cord_asc_net.fit()
-
-    df_to_save = pd.DataFrame(glambdas)
-    df_to_save.insert(0, "AUC", gauc_list)
-    df_to_save.to_csv(output_path, index=False)
-
-    return best_lambdas
+    else:
+        return [1, 1, 1, 1, 1, 1, 1]

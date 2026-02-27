@@ -18,8 +18,8 @@ from src.pyIDS_Functions.Training_Func import Train
 from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
 from src.utils.Print_Helper import MyPrint
 
-def UNR_IDD_Train(max_rows, val_fraction = 0.2, random_state=42):
-    MyPrint("Train_UNR-IDD", "Beginning to Train UNR-IDD")
+def UNR_IDD_Train(max_rows, num_cars = 50, val_fraction = 0.2, random_state=42):
+    MyPrint("Train_UNR-IDD", "Beginning to Train UNR-IDD with " + str(num_cars) + " cars")
 
     full_df = pd.read_csv(data_dir)
     full_df = full_df.head(max_rows)
@@ -31,8 +31,8 @@ def UNR_IDD_Train(max_rows, val_fraction = 0.2, random_state=42):
         stratify=full_df["class"],
         random_state=random_state
     )
-
-    cars = Mine_Cars(50, train_df, cars_dir)
+    
+    cars = Mine_Cars(num_cars, train_df, cars_dir)
 
     lambda_array = Optimize_Lambdas(
         algorithm="SLS",
@@ -48,4 +48,4 @@ def UNR_IDD_Train(max_rows, val_fraction = 0.2, random_state=42):
     MyPrint("Train_UNR-IDD", "Training complete!")
 
 if __name__ == "__main__":
-    UNR_IDD_Train(10000)
+    UNR_IDD_Train(1000, num_cars = 250)
