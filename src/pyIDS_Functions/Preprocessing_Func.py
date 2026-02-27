@@ -6,7 +6,16 @@ import os
 import glob
 from src.utils.Print_Helper import MyPrint
 
-def preprocess_data(input_path, output_path, class_column, columns=None, variance_threshold=0.01):
+def preprocess_data(
+    input_path, 
+    output_path,
+    class_column,
+    columns=None,
+    variance_threshold=0.01,
+    safe_name=None,
+    malicious_name=None,
+    safe_values=None,
+    malicious_values=None):
 
     csv_files = glob.glob(os.path.join(input_path, "*.csv"))
     MyPrint("Preprocessing_Func.py", f"Number of CSV files found: {len(csv_files)}")
@@ -27,7 +36,67 @@ def preprocess_data(input_path, output_path, class_column, columns=None, varianc
         MyPrint("Preprocessing_Func.py", "Error, no rows found in input path: " + input_path, error=True, line_num=24)
         return
 
+    # Ensure class column is named 'class' for pyIDS compatibility and rename class values if specified
     df = df.rename(columns={class_column: "class"})
+
+    if safe_name is not None and malicious_name is not None:
+
+        MyPrint("Preprocessing_Func.py",
+                "Renaming class values to: " + safe_name +
+                " (safe) and " + malicious_name + " (malicious)")
+
+        if safe_values is None:
+            MyPrint("Preprocessing_Func.py",
+                    "Error: safe_values must be provided when renaming class values",
+                    error=True, line_num=30)
+            return
+
+        # If malicious_values is None, treat as empty list
+        if malicious_values is None:
+            malicious_values = []
+
+        # Check overlap only if malicious_values provided
+        overlap = set(safe_values) & set(malicious_values)
+        if overlap:
+            MyPrint("Preprocessing_Func.py",
+                    f"Error: Values cannot appear in both classes: {overlap}",
+                    error=True, line_num=35)
+            return
+
+        # -------------------------------------------------
+        # Case 1: malicious_values provided → strict mapping
+        # -------------------------------------------------
+        if len(malicious_values) > 0:
+
+            mapping = {}
+
+            for val in safe_values:
+                mapping[val] = safe_name
+
+            for val in malicious_values:
+                mapping[val] = malicious_name
+
+            unique_vals = set(df["class"].unique())
+            unknown_vals = unique_vals - set(mapping.keys())
+
+            if unknown_vals:
+                MyPrint("Preprocessing_Func.py",
+                        f"Error: Unexpected class values found: {unknown_vals}",
+                        error=True, line_num=45)
+                return
+
+            df["class"] = df["class"].map(mapping)
+
+        # -------------------------------------------------
+        # Case 2: malicious_values empty → everything else malicious
+        # -------------------------------------------------
+        else:
+
+            df["class"] = np.where(
+                df["class"].isin(safe_values),
+                safe_name,
+                malicious_name
+            )
 
     if columns is not None:
         allowed_cols = [c for c in columns if c in df.columns]

@@ -9,7 +9,7 @@ INPUT_DIR = os.path.join(BASE_DIR, "data/unprocessed/UNR-IDD")
 OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/UNR-IDD_preprocessed.csv")
 
 def Preprocess_UNR_IDD():   
-    preprocess_data(INPUT_DIR, OUTPUT_DIR, "Label")
+    preprocess_data(INPUT_DIR, OUTPUT_DIR, "Label", safe_name="benign", malicious_name="malicious", safe_values=["Normal"],)
 
 if __name__ == "__main__":
     Preprocess_UNR_IDD()

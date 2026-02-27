@@ -53,7 +53,7 @@ def fmax_net(lambda_dict):
 def fit_lambda(arg_name):
     return arg_name, cord_asc_individual.fit_1lambda(arg_name)
 
-def Optimize_Lambdas(algorithm, cars, df, output_path, iterations, precision=50, search_type="coordinate", grid_step=200):
+def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3, individual_precision=50, iterations=3, precision=50, search_type="coordinate", grid_step=200):
     MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
@@ -77,13 +77,12 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, iterations, precision=50,
         cord_asc_individual = CoordinateAscent(
             func=fmax_individual,
             func_args_ranges=func_args_ranges,
-            ternary_search_precision=precision,
-            max_iterations=iterations
+            ternary_search_precision=individual_precision,
+            max_iterations=individiual_iterations
         )
 
         best_lambdas_initial = {}
         lambda_names = list(func_args_ranges.keys())
-
         
         num_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", mp.cpu_count()))
 
