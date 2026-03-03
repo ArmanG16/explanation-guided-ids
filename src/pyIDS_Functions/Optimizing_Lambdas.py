@@ -11,7 +11,6 @@ import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from pyids.algorithms.ids_classifier import mine_CARs
 from pyids.algorithms.ids import IDS
 from pyids.model_selection.coordinate_ascent import CoordinateAscent
 from pyids.model_selection.random_search import RandomSearch
@@ -145,12 +144,18 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3,
         return best_lambdas
     
     elif (search_type == "grid"):
-        MyPrint("Optimizing_Lambdas", "Using grid search for optimization")
+        MyPrint("Optimizing_Lambdas", "Using grid search for optimization parameter grid: ")
         
+        #Create grid with specified step size
+        #Number of points grows exponentially with number of parameters, so be careful with step size
+        #For example, with 7 parameters and a range of 1000, a step size of 200 would result in (1000/200)^7 = 5^7 = 78125 points to evaluate, which is feasible. However, a step size of 100 would result in (1000/100)^7 = 10^7 = 10 million points, which may be too large to evaluate in a reasonable time frame.
+        #The formula is (max-min)/step for each parameter, raised to the power of the number of parameters. So be mindful of the step size when using grid search with multiple parameters.
         param_grid = {
             k: range(v[0], v[1] + 1, grid_step)
             for k, v in func_args_ranges.items()
         }       
+
+        MyPrint("Optimizing_Lambdas", "Each lambda has range " + str(func_args_ranges) + " with step size " + str(grid_step) + ", resulting in a grid of size " + str(len(param_grid["l1"])) + " for each parameter.")
 
         grid = GridSearch(
             func=fmax_net,

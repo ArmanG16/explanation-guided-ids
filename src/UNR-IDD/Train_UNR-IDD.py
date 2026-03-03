@@ -39,8 +39,12 @@ def UNR_IDD_Train(max_rows, num_cars = 50, val_fraction = 0.2, random_state=42):
         cars=cars,
         df=val_df,
         output_path=lambdas_path,
+        individual_precision=50,
+        individiual_iterations=3,
         precision=50,
-        iterations=3
+        iterations=1,
+        grid_step=200,
+        search_type="coordinate"
     )
 
     Train("SLS", lambda_array, cars, train_df, output_path)
@@ -48,4 +52,4 @@ def UNR_IDD_Train(max_rows, num_cars = 50, val_fraction = 0.2, random_state=42):
     MyPrint("Train_UNR-IDD", "Training complete!")
 
 if __name__ == "__main__":
-    UNR_IDD_Train(1000, num_cars = 250)
+    UNR_IDD_Train(10000, num_cars = 250)
