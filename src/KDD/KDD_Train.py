@@ -5,16 +5,25 @@ from sklearn.model_selection import train_test_split
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
+sys.path.insert(0, os.path.join(BASE_DIR, "pyIDS"))
+
 data_dir = os.path.join(BASE_DIR, "data/processed/KDD_preprocessed.csv")
 cars_dir = os.path.join(BASE_DIR, "data/cars/KDD.csv")
 output_path = os.path.join(BASE_DIR, "data/rules/KDD_rules.csv")
 lambdas_path = os.path.join(BASE_DIR, "data/lambdas/KDD_best_lambdas.csv")
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-from src.pyIDS_Functions.Run_pyIDS import Run_pyIDS
+from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
+from src.pyIDS_Functions.Training_Func import Train
+from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
+from src.utils.Print_Helper import MyPrint
 
-def KDD_Train(val_fraction = 0.2, random_state = 42):
+def KDD_Train(max_rows, max_cars, val_fraction = 0.2, random_state = 42):
+
+    MyPrint("Train_KDD", "Beginning to Train KDD with " + str(max_cars) + " cars")
+
     full_df = pd.read_csv(data_dir)
+    full_df = full_df.head(max_rows)
     full_df["class"] = full_df["class"].astype(str)
 
     train_df, val_df = train_test_split(
@@ -24,9 +33,26 @@ def KDD_Train(val_fraction = 0.2, random_state = 42):
         random_state=random_state
     )
 
-    Run_pyIDS(algorithm="SLS", train_df=train_df, val_df=val_df, lambdas_path=lambdas_path, cars_path=cars_dir, output_path=output_path)
+    cars = Mine_Cars(max_cars, train_df, cars_dir)
+
+    lambda_array = Optimize_Lambdas(
+        algorithm="SLS",
+        cars=cars,
+        df=val_df,
+        output_path=lambdas_path,
+        individual_precision=50,
+        individiual_iterations=3,
+        precision=50,
+        iterations=1,
+        grid_step=200,
+        search_type="coordinate"
+    )
+
+    Train("SLS", lambda_array, cars, train_df, output_path)
+
+    MyPrint("Train_KDD", "Training complete!")
     
 
 
 if __name__ == "__main__":
-    KDD_Train()
+    KDD_Train(max_rows=10000, max_cars=250)

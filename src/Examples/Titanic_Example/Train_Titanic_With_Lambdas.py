@@ -48,7 +48,7 @@ def Titanic_Lambdas_Train(max_rows, val_fraction = 0.2, random_state=42):
         precision=50,
         iterations=1,
         grid_step=200,
-        search_type="coordinate"
+        search_type="grid"
     )
 
     Train("SLS", lambda_array, cars, train_df, output_path)
