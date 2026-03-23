@@ -164,7 +164,7 @@ def condition_to_text(c: Condition, meta: Optional[Dict] = None) -> str:
                     unit_txt = f" {unit}" if unit else ""
                     return f"{feat_name} ≈ {fmt_num(inv)}{unit_txt} ({qual})"
                 else:
-                    return f"{feat_name} is {qual} (z={fmt_num(z)})"
+                    return f"{feat_name} = {fmt_num(z)}"
 
         # Non-numeric / categorical
         return f"{feat_name} = {v}"
@@ -174,21 +174,25 @@ def condition_to_text(c: Condition, meta: Optional[Dict] = None) -> str:
 def parse_consequent_label(s: Any) -> str:
     """
     Converts strings like:
-      "Consequent{('class', 'PortScan')}"
+      "Consequent{('class', 'np.float64(1.0)')}"
     into:
-      "PortScan"
+      "1.0"
     """
     if s is None:
         return ""
     s = str(s).strip()
 
     if s.startswith("Consequent{") and s.endswith("}"):
-        inner = s[len("Consequent{"):-1].strip()  # "('class', 'PortScan')"
+        inner = s[len("Consequent{"):-1].strip()
         try:
             k, v = ast.literal_eval(inner)
-            return str(v)
+            v = str(v)
+
+            if v.startswith("np.float64(") and v.endswith(")"):
+                v = v[len("np.float64("):-1]
+
+            return v
         except Exception:
-            # fallback: just return inner if parsing fails
             return inner
 
     return s
