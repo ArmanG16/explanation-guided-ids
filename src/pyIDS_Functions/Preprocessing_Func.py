@@ -21,14 +21,6 @@ def preprocess_data(
     malicious_values=None,
 	metadata_output_path=None):
 
-def preprocess_data(
-    input_path,
-    output_path,
-    class_column,
-    columns=None,
-    variance_threshold=0.01,
-    metadata_output_path=None,   # NEW: save mappings/scaler/columns for XAI rule translation
-):
     """
     Loads all CSVs in input_path, preprocesses them for PyIDS, saves a single processed CSV to output_path,
     and (optionally) saves preprocessing metadata to metadata_output_path for XAI rule translation.

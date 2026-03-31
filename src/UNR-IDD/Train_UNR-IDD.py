@@ -12,11 +12,18 @@ sys.path.append(BASE_DIR)
 from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
 from src.pyIDS_Functions.Training_Func import Train
 from src.utils.Print_Helper import MyPrint
+from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
 
 # ---- Paths (MAKE SURE THESE MATCH YOUR PREPROCESS OUTPUT NAMES) ----
 data_path = os.path.join(BASE_DIR, "data", "processed", "unridd_preprocessed.csv")
 cars_path = os.path.join(BASE_DIR, "data", "cars", "UNR-IDD.csv")
 rules_out_path = os.path.join(BASE_DIR, "data", "rules", "UNR-IDD_rules.csv")
+
+def UNR_IDD_Train(
+    max_rows=10000,
+    val_fraction=0.2,
+    random_state=42,
+    num_cars=100):
 
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Processed data not found: {data_path}")
@@ -32,14 +39,13 @@ rules_out_path = os.path.join(BASE_DIR, "data", "rules", "UNR-IDD_rules.csv")
         random_state=random_state
     )
     
-    cars = Mine_Cars(num_cars, train_df, cars_dir)
+    cars = Mine_Cars(num_cars, train_df, cars_path)
     MyPrint("Train_UNR-IDD", f"Train rows: {len(train_df)} | Val rows: {len(val_df)}")
 
     lambda_array = Optimize_Lambdas(
         algorithm="SLS",
         cars=cars,
         df=val_df,
-        output_path=lambdas_path,
         individual_precision=50,
         individiual_iterations=3,
         precision=50,
@@ -47,10 +53,6 @@ rules_out_path = os.path.join(BASE_DIR, "data", "rules", "UNR-IDD_rules.csv")
         grid_step=200,
         search_type="coordinate"
     )
-
-    # 2) Pick a lambda array (simple default)
-    # NOTE: This is just a placeholder default; tune later if you want.
-    lambda_array = [1, 1, 1, 1, 1, 1, 1, 1]
 
     # 3) Train pyIDS and save selected rules
     Train("SLS", lambda_array, cars, train_df, rules_out_path)
