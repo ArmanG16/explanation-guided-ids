@@ -65,4 +65,4 @@ def KDD_Train(max_rows, max_cars, val_fraction = 0.2, random_state = 42):
 
 
 if __name__ == "__main__":
-    KDD_Train(max_rows=10000, max_cars=250)
+    KDD_Train(max_rows=10000, max_cars=5000)
