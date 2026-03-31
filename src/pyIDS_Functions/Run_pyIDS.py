@@ -12,7 +12,7 @@ from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
 from src.utils.Print_Helper import MyPrint
 
 def Run_pyIDS(algorithm, train_df, cars_path, output_path, val_df = None, lambdas_path = None ):
-    MyPrint("Train_Titanic_With_Lambdas", "Beginning to Train Titanic")
+    MyPrint("Run_pyIDS", "Beginning to Train")
 
     cars = Mine_Cars(100, train_df, cars_path)
 

@@ -12,15 +12,18 @@ sys.path.append(BASE_DIR)
 from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
 from src.pyIDS_Functions.Training_Func import Train
 from src.utils.Print_Helper import MyPrint
+from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
 
 # ---- Paths (MAKE SURE THESE MATCH YOUR PREPROCESS OUTPUT NAMES) ----
 data_path = os.path.join(BASE_DIR, "data", "processed", "unridd_preprocessed.csv")
 cars_path = os.path.join(BASE_DIR, "data", "cars", "UNR-IDD.csv")
 rules_out_path = os.path.join(BASE_DIR, "data", "rules", "UNR-IDD_rules.csv")
 
-
-def UNR_IDD_Train(max_rows=10000, val_fraction=0.2, random_state=42, rule_cutoff=100):
-    MyPrint("Train_UNR-IDD", "Beginning to Train UNR-IDD")
+def UNR_IDD_Train(
+    max_rows=10000,
+    val_fraction=0.2,
+    random_state=42,
+    num_cars=100):
 
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Processed data not found: {data_path}")
@@ -35,15 +38,21 @@ def UNR_IDD_Train(max_rows=10000, val_fraction=0.2, random_state=42, rule_cutoff
         stratify=full_df["class"],
         random_state=random_state
     )
-
+    
+    cars = Mine_Cars(num_cars, train_df, cars_path)
     MyPrint("Train_UNR-IDD", f"Train rows: {len(train_df)} | Val rows: {len(val_df)}")
 
-    # 1) Mine CARs on the training split
-    cars = Mine_Cars(rule_cutoff, train_df, cars_path)
-
-    # 2) Pick a lambda array (simple default)
-    # NOTE: This is just a placeholder default; tune later if you want.
-    lambda_array = [1, 1, 1, 1, 1, 1, 1, 1]
+    lambda_array = Optimize_Lambdas(
+        algorithm="SLS",
+        cars=cars,
+        df=val_df,
+        individual_precision=50,
+        individiual_iterations=3,
+        precision=50,
+        iterations=1,
+        grid_step=200,
+        search_type="coordinate"
+    )
 
     # 3) Train pyIDS and save selected rules
     Train("SLS", lambda_array, cars, train_df, rules_out_path)

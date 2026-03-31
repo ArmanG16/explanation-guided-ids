@@ -1,7 +1,6 @@
 import argparse
 import json
 import math
-import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional

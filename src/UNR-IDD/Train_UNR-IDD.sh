@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1          # 
 #SBATCH -n 8          # 
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=8g      # 
 #SBATCH -J "Train on UNR-IDD"  # 
 #SBATCH -p short      # 
