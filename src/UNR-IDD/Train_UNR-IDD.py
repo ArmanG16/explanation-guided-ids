@@ -38,7 +38,6 @@ def UNR_IDD_Train(max_rows, num_cars = 50, val_fraction = 0.2, random_state=42):
         algorithm="SLS",
         cars=cars,
         df=val_df,
-        output_path=lambdas_path,
         individual_precision=50,
         individiual_iterations=3,
         precision=50,

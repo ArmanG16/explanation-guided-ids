@@ -42,7 +42,6 @@ def Titanic_Lambdas_Train(max_rows, val_fraction = 0.2, random_state=42):
         algorithm="SLS",
         cars=cars,
         df=val_df,
-        output_path=lambdas_path,
         individual_precision=50,
         individiual_iterations=3,
         precision=50,
@@ -50,6 +49,8 @@ def Titanic_Lambdas_Train(max_rows, val_fraction = 0.2, random_state=42):
         grid_step=200,
         search_type="grid"
     )
+
+    MyPrint("Train_Titanic_With_Lambdas", "Lambdas optimized to: " + str(lambda_array))
 
     Train("SLS", lambda_array, cars, train_df, output_path)
 

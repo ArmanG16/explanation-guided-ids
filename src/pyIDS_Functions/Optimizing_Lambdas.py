@@ -52,22 +52,42 @@ def fmax_net(lambda_dict):
 def fit_lambda(arg_name):
     return arg_name, cord_asc_individual.fit_1lambda(arg_name)
 
-def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3, individual_precision=50, iterations=3, precision=50, search_type="coordinate", grid_step=200):
+def run_grid_chunk(args):
+    """Evaluate a chunk of grid combos, returning the (combo, score) with the highest AUC."""
+    parameter_names, chunk = args
+    best_score = -1
+    best_combo = None
+
+    for combo in chunk:
+        lambda_dict = dict(zip(parameter_names, combo))
+        score = fmax_individual(lambda_dict)
+        if score > best_score:
+            best_score = score
+            best_combo = combo
+
+    return best_combo, best_score
+
+def Optimize_Lambdas(algorithm, cars, df, individiual_iterations=3, individual_precision=50, iterations=3, precision=50, search_type="coordinate", grid_step=200, func_args_ranges=None):
     MyPrint("Optimizing_Lambdas", "Starting lambda optimization...")
     global galgorithm, gquant_df, gcars
     galgorithm = algorithm
     gcars = cars
     gquant_df = QuantitativeDataFrame(df)
 
-    func_args_ranges=dict(
-    l1=(1, 1000),
-    l2=(1, 1000),
-    l3=(1, 1000),
-    l4=(1, 1000),
-    l5=(1, 1000),
-    l6=(1, 1000),
-    l7=(1, 1000)
-    )
+    if (func_args_ranges is None):
+        func_args_ranges=dict(
+        l1=(1, 1000),
+        l2=(1, 1000),
+        l3=(1, 1000),
+        l4=(1, 1000),
+        l5=(1, 1000),
+        l6=(1, 1000),
+        l7=(1, 1000)
+        )
+
+    num_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", mp.cpu_count()))
+
+    MyPrint("Optimizing_Lambdas", "Found " + str(num_workers) + " workers for parallel optimization.")
 
     if (search_type == "coordinate"):
         MyPrint("Optimizing_Lambdas", "Using coordinate ascent for optimization with precision " + str(precision) + " and iterations " + str(iterations) + "...")
@@ -82,10 +102,6 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3,
 
         best_lambdas_initial = {}
         lambda_names = list(func_args_ranges.keys())
-        
-        num_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", mp.cpu_count()))
-
-        MyPrint("Optimizing_Lambdas", "Found " + str(num_workers) + " workers for parallel optimization.")
 
         mp.set_start_method("fork", force=True)
 
@@ -110,7 +126,6 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3,
             initializer=init_worker,
             initargs=(cars, gquant_df, algorithm)
         ) as pool:
-
             results = pool.map(fit_lambda, lambda_names)
 
         for arg_name, best_val in results:
@@ -144,6 +159,7 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3,
         return best_lambdas
     
     elif (search_type == "grid"):
+        """elif (search_type == "grid"):
         MyPrint("Optimizing_Lambdas", "Using grid search for optimization parameter grid: ")
         
         #Create grid with specified step size
@@ -165,6 +181,63 @@ def Optimize_Lambdas(algorithm, cars, df, output_path, individiual_iterations=3,
 
         best_lambdas = grid.fit()
 
+        best_lambdas = dict(zip(param_grid.keys(), best_lambdas["params"])) #Convert from list back to dict with parameter names
+
+        return best_lambdas"""
+        MyPrint("Optimizing_Lambdas", "Using grid search for optimization parameter grid: ")
+
+        param_grid = {
+            k: range(v[0], v[1] + 1, grid_step)
+            for k, v in func_args_ranges.items()
+        }
+
+        MyPrint("Optimizing_Lambdas", "Each lambda has range " + str(func_args_ranges) + " with step size " + str(grid_step) + ", resulting in a grid of size " + str(len(param_grid["l1"])) + " for each parameter.")
+
+        # Expand full grid and split into chunks, one for each worker
+        parameter_names = list(param_grid.keys())
+        all_combos = list(itertools.product(*param_grid.values())) # This creates a list of all combinations of parameters in the grid, which can be very large, so be careful with the step size and number of parameters. The length of all_combos will be (number of values for l1) * (number of values for l2) * ... * (number of values for l7). For example, if each parameter has 5 possible values, then all_combos will have 5^7 = 78125 combinations.
+        chunk_size = max(1, len(all_combos) // num_workers)
+        chunks = [all_combos[i:i + chunk_size] for i in range(0, len(all_combos), chunk_size)] # Split all_combos into chunks of size chunk_size, resulting in len(all_combos)/chunk_size chunks. Each chunk is a list of parameter combinations that one worker will evaluate.
+
+        MyPrint("Optimizing_Lambdas", f"Splitting {len(all_combos)} grid combos across {len(chunks)} workers (chunk size: {chunk_size})")
+
+        # Prepare OS
+        old_env = {
+            "OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS"),
+            "OPENBLAS_NUM_THREADS": os.environ.get("OPENBLAS_NUM_THREADS"),
+            "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS"),
+            "VECLIB_MAXIMUM_THREADS": os.environ.get("VECLIB_MAXIMUM_THREADS"),
+            "NUMEXPR_NUM_THREADS": os.environ.get("NUMEXPR_NUM_THREADS"),
+        }
+
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["OPENBLAS_NUM_THREADS"] = "1"
+        os.environ["MKL_NUM_THREADS"] = "1"
+        os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+        os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+        mp.set_start_method("fork", force=True)
+
+        with mp.Pool(
+            processes=num_workers,
+            initializer=init_worker,
+            initargs=(cars, gquant_df, algorithm)
+        ) as pool:
+            # Each worker receives (parameter_names, chunk) and returns (best_combo, best_score)
+            results = pool.map(run_grid_chunk, [(parameter_names, chunk) for chunk in chunks])
+
+        # Restore environment
+        for key, value in old_env.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+        # Pick the best result across all workers
+        best_combo, best_score = max(results, key=lambda x: x[1])
+        best_lambdas = dict(zip(parameter_names, best_combo))
+
+        MyPrint("Optimizing_Lambdas", f"Best grid lambdas: {best_lambdas} with AUC: {best_score}", success=True)
 
         return best_lambdas
     
