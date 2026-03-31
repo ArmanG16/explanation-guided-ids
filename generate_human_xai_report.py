@@ -1,6 +1,7 @@
 import argparse
 import json
 import math
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -124,6 +125,121 @@ def summarize_csv(df: pd.DataFrame, positive_name: str, negative_name: str) -> D
     }
 
 
+def extract_features_from_rule(rule_text: str) -> List[str]:
+    if not rule_text:
+        return []
+    if "IF " in rule_text and " THEN " in rule_text:
+        cond_text = rule_text.split("IF ", 1)[1].split(" THEN ", 1)[0]
+    else:
+        cond_text = rule_text
+
+    parts = [p.strip() for p in cond_text.split(" AND ")]
+    features = []
+    for p in parts:
+        m = re.match(r"^([A-Za-z0-9_]+)\s*=", p)
+        if m:
+            features.append(m.group(1))
+            continue
+        m = re.search(r"([A-Za-z0-9_]+)", p)
+        if m:
+            features.append(m.group(1))
+    return features
+
+
+def feature_phrase(feature: str) -> str:
+    f = feature.lower()
+    mapping = [
+        (["tcprtt", "synack", "ackdat", "rtt"], "TCP timing and response behavior"),
+        (["smean", "dmean", "sbytes", "dbytes", "rate", "load"], "traffic volume and packet-size behavior"),
+        (["dloss", "sloss", "loss"], "packet loss behavior"),
+        (["service", "proto", "state"], "service/protocol behavior"),
+        (["sttl", "dttl", "ttl", "ct_state_ttl"], "time-to-live and packet path behavior"),
+        (["ct_", "is_sm_ips_ports"], "connection-state patterns"),
+        (["dur"], "connection duration"),
+    ]
+    for keys, phrase in mapping:
+        if any(k in f for k in keys):
+            return phrase
+    return feature.replace("_", " ")
+
+
+def combine_feature_phrases(features: List[str]) -> str:
+    phrases = []
+    seen = set()
+    for feat in features:
+        phrase = feature_phrase(feat)
+        if phrase not in seen:
+            phrases.append(phrase)
+            seen.add(phrase)
+    if not phrases:
+        return "a recurring processed feature pattern"
+    if len(phrases) == 1:
+        return phrases[0]
+    if len(phrases) == 2:
+        return f"{phrases[0]} together with {phrases[1]}"
+    return ", ".join(phrases[:-1]) + f", and {phrases[-1]}"
+
+
+def generate_rule_interpretation(
+    rule_text: str,
+    predicted_class_counts: Counter,
+    true_class_counts: Counter,
+    avg_support: Optional[float],
+    avg_confidence: Optional[float],
+    positive_name: str,
+    negative_name: str,
+) -> Dict[str, str]:
+    features = extract_features_from_rule(rule_text)
+    feature_summary = combine_feature_phrases(features)
+
+    dominant_pred = predicted_class_counts.most_common(1)[0][0] if predicted_class_counts else "Unknown"
+    dominant_true = true_class_counts.most_common(1)[0][0] if true_class_counts else "Unknown"
+
+    if dominant_pred == positive_name:
+        class_phrase = "attack-related behavior"
+        implication_target = "malicious activity"
+    elif dominant_pred == negative_name:
+        class_phrase = "normal or benign behavior"
+        implication_target = "legitimate traffic"
+    else:
+        class_phrase = f"{dominant_pred.lower()} behavior"
+        implication_target = dominant_pred.lower()
+
+    if avg_confidence is not None and avg_confidence >= 0.95:
+        reliability = "The rule appears highly reliable in the returned explanations"
+    elif avg_confidence is not None and avg_confidence >= 0.80:
+        reliability = "The rule appears fairly reliable in the returned explanations"
+    else:
+        reliability = "The rule should be interpreted more cautiously"
+
+    if avg_support is not None and avg_support >= 0.15:
+        breadth = "and it captures a fairly common pattern rather than a rare edge case."
+    elif avg_support is not None and avg_support >= 0.05:
+        breadth = "and it captures a moderately recurring pattern in the processed data."
+    else:
+        breadth = "and it seems to represent a narrower, more specific pattern."
+
+    interpretation = (
+        f"This rule suggests that {feature_summary} is strongly associated with {class_phrase}. "
+        f"{reliability}, {breadth}"
+    )
+
+    if dominant_pred == dominant_true and dominant_pred != "Unknown":
+        consistency = f"In the shown rows, the predicted class also matches the true class pattern ({dominant_true}), which supports the usefulness of this rule."
+    else:
+        consistency = "The relationship between the predicted and true classes should be reviewed carefully to confirm whether this rule generalizes well beyond the shown examples."
+
+    implication = (
+        f"A practical implication is that analysts can monitor this combination of features as a signal for {implication_target}. "
+        f"{consistency}"
+    )
+
+    return {
+        "interpretation": interpretation,
+        "implication": implication,
+    }
+
+
 def build_markdown_from_json(rows: List[Dict[str, Any]], summary: Dict[str, Any], positive_name: str, negative_name: str, examples_per_rule: int, max_rows: int) -> str:
     lines: List[str] = []
     lines.append("# Human-Readable XAI Report")
@@ -184,15 +300,35 @@ def build_markdown_from_json(rows: List[Dict[str, Any]], summary: Dict[str, Any]
         preds = Counter(e["predicted_class"] for e in examples)
         trues = Counter(e["true_class"] for e in examples)
 
+        avg_support = (sum(supports) / len(supports)) if supports else None
+        avg_conf = (sum(confs) / len(confs)) if confs else None
+
         if supports:
-            lines.append(f"**Support:** around {pct(sum(supports)/len(supports))}")
+            lines.append(f"**Support:** around {pct(avg_support)}")
         if confs:
-            lines.append(f"**Confidence:** around {fmt_num(sum(confs)/len(confs), 3)}")
+            lines.append(f"**Confidence:** around {fmt_num(avg_conf, 3)}")
         if preds:
             lines.append("**Predicted class when this rule fired:** " + ", ".join(f"{k} ({v:,})" for k, v in preds.items()))
         if trues:
             lines.append("**True class among shown rows:** " + ", ".join(f"{k} ({v:,})" for k, v in trues.items()))
         lines.append("")
+
+        interp = generate_rule_interpretation(
+            rule_text=rule,
+            predicted_class_counts=preds,
+            true_class_counts=trues,
+            avg_support=avg_support,
+            avg_confidence=avg_conf,
+            positive_name=positive_name,
+            negative_name=negative_name,
+        )
+        lines.append("**Interpretation:**")
+        lines.append(interp["interpretation"])
+        lines.append("")
+        lines.append("**Potential implication:**")
+        lines.append(interp["implication"])
+        lines.append("")
+
         lines.append("**Example rows and plain-language explanations:**")
         for ex in examples[:examples_per_rule]:
             lines.append(f"- Row **{ex['row_index']}** | true class: **{ex['true_class']}** | predicted class: **{ex['predicted_class']}**")
