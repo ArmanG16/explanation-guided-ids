@@ -9,7 +9,7 @@ INPUT_DIR = os.path.join(BASE_DIR, "data/unprocessed/NSL-KDD")
 OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/KDD_preprocessed.csv")
 
 def Preprocess_UNR_IDD():   
-    preprocess_data(INPUT_DIR, OUTPUT_DIR, "class")
+    preprocess_data(INPUT_DIR, OUTPUT_DIR, "class", safe_name="normal", malicious_name="attack", safe_values=["normal"],)
 
 if __name__ == "__main__":
     Preprocess_UNR_IDD()
