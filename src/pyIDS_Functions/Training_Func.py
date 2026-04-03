@@ -1,3 +1,4 @@
+import json
 import sys
 import os
 from src.utils.Print_Helper import MyPrint
@@ -20,6 +21,7 @@ def Train(algorithm, lambda_array, cars, df, output_path):
     acc = ids.score(quant_dataframe) # accuracy is the percentage of the dataset covered by the generated rules
 
     rules_list = []
+    json_list = []
 
     for i, rule in enumerate(ids.clf.rules, start=1):
         car = rule.car
@@ -40,6 +42,31 @@ def Train(algorithm, lambda_array, cars, df, output_path):
             "Accuracy": acc if i == 1 else ""
         })
 
+        readable_rule = f"IF {antecedent} THEN class = {consequent}"
+
+        json_list.append({
+            "row_index": i,
+            "true_class": None,  # not known at training time
+            "matched_rules": 1,
+            "top_explanations": [
+                {
+                    "Predicted_Class": str(consequent),
+                    "Confidence": confidence,
+                    "Support": support,
+                    "F1": f1,
+                    "Readable_Rule": readable_rule
+                }
+            ]
+        })
+
     rules_df = pd.DataFrame(rules_list)
 
     rules_df.to_csv(output_path, index=False)
+
+    if json_output_path is None:
+        json_output_path = output_path.replace(".csv", ".json")
+
+    with open(json_output_path, "w") as f:
+        json.dump(json_list, f, indent=2)
+
+    MyPrint("Training_Func", f"JSON results saved to: {json_output_path}")

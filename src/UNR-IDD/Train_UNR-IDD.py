@@ -1,18 +1,17 @@
-import sys
 import os
+import sys
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
-# Make sure pyIDS is importable
 sys.path.insert(0, os.path.join(BASE_DIR, "pyIDS"))
-sys.path.append(BASE_DIR)
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from src.pyIDS_Functions.Mining_Cars_Func import Mine_Cars
 from src.pyIDS_Functions.Training_Func import Train
-from src.utils.Print_Helper import MyPrint
 from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
+from src.utils.Print_Helper import MyPrint
 
 # ---- Paths (MAKE SURE THESE MATCH YOUR PREPROCESS OUTPUT NAMES) ----
 data_path = os.path.join(BASE_DIR, "data", "processed", "unridd_preprocessed.csv")
@@ -50,8 +49,8 @@ def UNR_IDD_Train(
         individiual_iterations=3,
         precision=50,
         iterations=1,
-        grid_step=200,
-        search_type="coordinate"
+        grid_step=500,
+        search_type="grid"
     )
 
     # 3) Train pyIDS and save selected rules
@@ -61,4 +60,4 @@ def UNR_IDD_Train(
 
 
 if __name__ == "__main__":
-    UNR_IDD_Train(max_rows=10000)
+    UNR_IDD_Train(max_rows=1500, num_cars=200)

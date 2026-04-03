@@ -7,5 +7,5 @@
 #SBATCH -t 12:00:00   # 
 
 echo "Training on NSL-KDD dataset..."
-source /home/mrcloutier/env/bin/activate
+source /home/$(whoami)/env/bin/activate
 python -u KDD_Train.py

@@ -32,6 +32,16 @@ def preprocess_data(
       - label_encoders (per categorical feature: int_code -> original category)
       - scaler (per numeric feature: mean/scale, so you can inverse-transform rule thresholds)
       - class_column info
+
+    Class renaming behaviour:
+      - safe_name (str): label assigned to all values in safe_values.
+      - malicious_name (str): single malicious label.
+        - If malicious_values is None  → everything NOT in safe_values gets malicious_name.
+        - If malicious_values is a list → strict mapping; unexpected values raise an error.
+      - malicious_name (list[str]): multiple malicious labels.
+        - malicious_values MUST be a matching list[list], where
+          malicious_values[i] contains the raw class values mapped to malicious_name[i].
+        - Every value in the dataset must appear in safe_values or one of the malicious buckets.
     """
 
     csv_files = glob.glob(os.path.join(input_path, "*.csv"))
@@ -66,62 +76,131 @@ def preprocess_data(
 
     if safe_name is not None and malicious_name is not None:
 
-        MyPrint("Preprocessing_Func.py",
-                "Renaming class values to: " + safe_name +
-                " (safe) and " + malicious_name + " (malicious)")
-
         if safe_values is None:
             MyPrint("Preprocessing_Func.py",
                     "Error: safe_values must be provided when renaming class values",
                     error=True, line_num=30)
             return
 
-        # If malicious_values is None, treat as empty list
-        if malicious_values is None:
-            malicious_values = []
+        # ------------------------------------------------------------------
+        # Multi-class malicious: malicious_name is a list of names,
+        # malicious_values must be a matching list of value-lists.
+        # ------------------------------------------------------------------
+        if isinstance(malicious_name, list):
 
-        # Check overlap only if malicious_values provided
-        overlap = set(safe_values) & set(malicious_values)
-        if overlap:
             MyPrint("Preprocessing_Func.py",
-                    f"Error: Values cannot appear in both classes: {overlap}",
-                    error=True, line_num=35)
-            return
+                    "Renaming class values to: " + safe_name +
+                    " (safe) and " + str(malicious_name) + " (malicious classes)")
 
-        # -------------------------------------------------
-        # Case 1: malicious_values provided → strict mapping
-        # -------------------------------------------------
-        if len(malicious_values) > 0:
+            if malicious_values is None or not isinstance(malicious_values, list):
+                MyPrint("Preprocessing_Func.py",
+                        "Error: malicious_values must be a list of lists when malicious_name is a list",
+                        error=True, line_num=98)
+                return
 
-            mapping = {}
+            if len(malicious_name) != len(malicious_values):
+                MyPrint("Preprocessing_Func.py",
+                        f"Error: malicious_name has {len(malicious_name)} entries but "
+                        f"malicious_values has {len(malicious_values)} entries — they must match",
+                        error=True, line_num=104)
+                return
 
-            for val in safe_values:
-                mapping[val] = safe_name
+            # Check for overlap between safe_values and any malicious bucket
+            all_malicious_flat = [v for bucket in malicious_values for v in bucket]
+            overlap = set(safe_values) & set(all_malicious_flat)
+            if overlap:
+                MyPrint("Preprocessing_Func.py",
+                        f"Error: Values cannot appear in both classes: {overlap}",
+                        error=True, line_num=114)
+                return
 
-            for val in malicious_values:
-                mapping[val] = malicious_name
+            # Check for overlap across malicious buckets
+            seen = set()
+            for i, bucket in enumerate(malicious_values):
+                bucket_set = set(bucket)
+                cross = seen & bucket_set
+                if cross:
+                    MyPrint("Preprocessing_Func.py",
+                            f"Error: Values appear in multiple malicious buckets: {cross}",
+                            error=True, line_num=125)
+                    return
+                seen |= bucket_set
+
+            # Build mapping: safe values + each malicious bucket
+            mapping = {val: safe_name for val in safe_values}
+            for name, bucket in zip(malicious_name, malicious_values):
+                for val in bucket:
+                    mapping[val] = name
 
             unique_vals = set(df["class"].unique())
             unknown_vals = unique_vals - set(mapping.keys())
-
             if unknown_vals:
                 MyPrint("Preprocessing_Func.py",
                         f"Error: Unexpected class values found: {unknown_vals}",
-                        error=True, line_num=45)
+                        error=True, line_num=140)
                 return
 
             df["class"] = df["class"].map(mapping)
 
-        # -------------------------------------------------
-        # Case 2: malicious_values empty → everything else malicious
-        # -------------------------------------------------
+        # ------------------------------------------------------------------
+        # Single malicious name (original behaviour, preserved exactly)
+        # ------------------------------------------------------------------
         else:
 
-            df["class"] = np.where(
-                df["class"].isin(safe_values),
-                safe_name,
-                malicious_name
-            )
+            MyPrint("Preprocessing_Func.py",
+                    "Renaming class values to: " + safe_name +
+                    " (safe) and " + malicious_name + " (malicious)")
+
+            # If malicious_values is None, treat as empty list
+            if malicious_values is None:
+                malicious_values = []
+
+            # Check overlap only if malicious_values provided
+            overlap = set(safe_values) & set(malicious_values)
+            if overlap:
+                MyPrint("Preprocessing_Func.py",
+                        f"Error: Values cannot appear in both classes: {overlap}",
+                        error=True, line_num=163)
+                return
+            
+            print("172")
+
+            # -------------------------------------------------
+            # Case 1: malicious_values provided → strict mapping
+            # -------------------------------------------------
+            if len(malicious_values) > 0:
+
+                mapping = {}
+
+                for val in safe_values:
+                    mapping[val] = safe_name
+
+                for val in malicious_values:
+                    mapping[val] = malicious_name
+
+                unique_vals = set(df["class"].unique())
+                unknown_vals = unique_vals - set(mapping.keys())
+
+                if unknown_vals:
+                    MyPrint("Preprocessing_Func.py",
+                            f"Error: Unexpected class values found: {unknown_vals}",
+                            error=True, line_num=185)
+                    return
+
+                df["class"] = df["class"].map(mapping)
+
+            # -------------------------------------------------
+            # Case 2: malicious_values empty → everything else malicious
+            # -------------------------------------------------
+            else:
+
+                df["class"] = np.where(
+                    df["class"].isin(safe_values),
+                    safe_name,
+                    malicious_name
+                )
+
+    saved_class = df["class"].copy()
 
     # Optional column whitelist
     if columns is not None:
@@ -189,7 +268,7 @@ def preprocess_data(
     df = df.dropna()
 
     # Reattach class column at end
-    df["class"] = label_col
+    df["class"] = saved_class.loc[df.index]
     df = df[[c for c in df.columns if c != "class"] + ["class"]]
 
     # Save processed dataset

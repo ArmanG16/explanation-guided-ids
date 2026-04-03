@@ -36,15 +36,19 @@ def Preprocess_UNR_IDD():
         columns=None,
         variance_threshold=0.01,
         metadata_output_path=OUTPUT_META,
+        safe_name="benign",
+        malicious_name=["DDOS", "Non-DDOS"],
+        malicious_values=[
+            ["TCP-SYN", "Overflow"],
+            ["PortScan", "Blackhole", "Diversion"],
+        ],
+        safe_values=["Normal"]
     )
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 INPUT_DIR = os.path.join(BASE_DIR, "data/unprocessed/UNR-IDD")
 OUTPUT_DIR = os.path.join(BASE_DIR, "data/processed/UNR-IDD_preprocessed.csv")
 OUTPUT_META = os.path.join(BASE_DIR, "data", "processed", "unridd_preprocess_metadata.json")
-
-def Preprocess_UNR_IDD():   
-    preprocess_data(INPUT_DIR, OUTPUT_DIR, "Label", safe_name="benign", malicious_name="malicious", safe_values=["Normal"], metadata_output_path=OUTPUT_META)
 
 if __name__ == "__main__":
     Preprocess_UNR_IDD()
