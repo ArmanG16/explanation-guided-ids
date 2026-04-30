@@ -14,11 +14,11 @@ from src.pyIDS_Functions.Optimizing_Lambdas import Optimize_Lambdas
 from src.utils.Print_Helper import MyPrint
 
 # ---- Paths (MAKE SURE THESE MATCH YOUR PREPROCESS OUTPUT NAMES) ----
-data_path = os.path.join(BASE_DIR, "data", "processed", "unridd_preprocessed.csv")
-cars_path = os.path.join(BASE_DIR, "data", "cars", "UNR-IDD.csv")
-rules_out_path = os.path.join(BASE_DIR, "data", "rules", "UNR-IDD_rules.csv")
+data_path = os.path.join(BASE_DIR, "data", "processed", "usnw_preprocessed.csv")
+cars_path = os.path.join(BASE_DIR, "data", "cars", "USNW.csv")
+rules_out_path = os.path.join(BASE_DIR, "data", "rules", "USNW_rules.csv")
 
-def UNR_IDD_Train(
+def USNW_Train(
     max_rows=10000,
     val_fraction=0.2,
     random_state=42,
@@ -39,7 +39,7 @@ def UNR_IDD_Train(
     )
     
     cars = Mine_Cars(num_cars, train_df, cars_path)
-    MyPrint("Train_UNR-IDD", f"Train rows: {len(train_df)} | Val rows: {len(val_df)}")
+    MyPrint("Train_USNW", f"Train rows: {len(train_df)} | Val rows: {len(val_df)}")
 
     lambda_array = [1, 1, 1, 1, 1, 1, 1] #Optimize_Lambdas(
     #    algorithm="SLS",
@@ -50,14 +50,14 @@ def UNR_IDD_Train(
     #    precision=50,
     #    iterations=1,
     #    grid_step=500,
-    #    search_type="grid"
+    #    search_type="coordinate"
     #)
 
     # 3) Train pyIDS and save selected rules
     Train("SLS", lambda_array, cars, train_df, rules_out_path)
 
-    MyPrint("Train_UNR-IDD", f"Training complete! Rules saved to: {rules_out_path}")
+    MyPrint("Train_USNW", f"Training complete! Rules saved to: {rules_out_path}")
 
 
 if __name__ == "__main__":
-    UNR_IDD_Train(max_rows=1500, num_cars=100)
+    USNW_Train(max_rows=1500, num_cars=100)

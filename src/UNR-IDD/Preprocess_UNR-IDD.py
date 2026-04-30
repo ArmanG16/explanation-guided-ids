@@ -37,11 +37,7 @@ def Preprocess_UNR_IDD():
         variance_threshold=0.01,
         metadata_output_path=OUTPUT_META,
         safe_name="benign",
-        malicious_name=["DDOS", "Non-DDOS"],
-        malicious_values=[
-            ["TCP-SYN", "Overflow"],
-            ["PortScan", "Blackhole", "Diversion"],
-        ],
+        malicious_name= "malicious",
         safe_values=["Normal"]
     )
 

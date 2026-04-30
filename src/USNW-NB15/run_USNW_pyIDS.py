@@ -10,7 +10,7 @@ if BASE_DIR not in sys.path:
 
 from src.pyIDS_Functions.Run_pyIDS import Run_pyIDS
 from src.utils.Print_Helper import MyPrint
-
+from src.pyIDS_Functions.Training_Func import Train
 
 def Run_USNW_pyIDS():
     input_csv = os.path.join(

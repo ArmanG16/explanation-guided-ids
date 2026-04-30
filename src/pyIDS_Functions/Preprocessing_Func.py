@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import KBinsDiscretizer
 
 from src.utils.Print_Helper import MyPrint
 
@@ -19,7 +21,8 @@ def preprocess_data(
     malicious_name=None,
     safe_values=None,
     malicious_values=None,
-	metadata_output_path=None):
+	metadata_output_path=None,
+    discrete_bins=None):
 
     """
     Loads all CSVs in input_path, preprocesses them for PyIDS, saves a single processed CSV to output_path,
@@ -270,6 +273,18 @@ def preprocess_data(
     # Reattach class column at end
     df["class"] = saved_class.loc[df.index]
     df = df[[c for c in df.columns if c != "class"] + ["class"]]
+
+    #Discretize if needed
+    if (discrete_bins is not None):
+        feature_cols = [c for c in df.columns if c != "class"]
+
+        disc = KBinsDiscretizer(
+            n_bins=discrete_bins,
+            encode='ordinal',
+            strategy='quantile'
+        )
+
+        df[feature_cols] = disc.fit_transform(df[feature_cols])
 
     # Save processed dataset
     df.to_csv(output_path, index=False)

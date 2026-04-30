@@ -7,7 +7,7 @@
 #SBATCH --mem=256g
 
 
-echo "Training on USNW-NB15..."
+echo "Preprocessing on USNW-NB15..."
 source /home/mrcloutier/explanation-guided-ids/venv/bin/activate
-python -u Train_USNW.py
+python -u Preprocess_USNW.py
 

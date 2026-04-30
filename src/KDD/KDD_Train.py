@@ -37,26 +37,28 @@ def KDD_Train(max_rows, max_cars, val_fraction = 0.2, random_state = 42):
 
     func_args_ranges=dict(
         l1=(250, 350),
-        l2=(700, 800),
+        l2=(650, 750),
         l3=(400, 500),
         l4=(500, 600),
         l5=(400, 500),
         l6=(1, 100),
-        l7=(450, 550)
+        l7=(400, 500)
         )
 
-    lambda_array = Optimize_Lambdas(
-        algorithm="SLS",
-        cars=cars,
-        df=val_df,
-        individual_precision=50,
-        individiual_iterations=3,
-        precision=50,
-        iterations=1,
-        grid_step=25,
-        search_type="grid",
-        func_args_ranges=func_args_ranges
-    )
+    #[325, 700, 425, 500, 475, 1, 550]
+
+    lambda_array = [1, 1, 1, 1, 1, 1, 1]#Optimize_Lambdas(
+    #    algorithm="SLS",
+    #    cars=cars,
+    #    df=val_df,
+    #    individual_precision=50,
+    #    individiual_iterations=3,
+    #    precision=50,
+    #    iterations=1,
+    #    grid_step=25,
+    #    search_type="grid",
+    #    func_args_ranges=func_args_ranges
+    #)
 
     Train("SLS", lambda_array, cars, train_df, output_path)
 
@@ -65,4 +67,4 @@ def KDD_Train(max_rows, max_cars, val_fraction = 0.2, random_state = 42):
 
 
 if __name__ == "__main__":
-    KDD_Train(max_rows=10000, max_cars=5000)
+    KDD_Train(max_rows=1500, max_cars=100)

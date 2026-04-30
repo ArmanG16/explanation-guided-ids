@@ -1,6 +1,8 @@
 import json
 import sys
 import os
+
+from sklearn import metrics
 from src.utils.Print_Helper import MyPrint
 from src.utils.CSV_Files_To_DataFrame import CSV_to_DF
 import pandas as pd
@@ -9,7 +11,7 @@ from pyarc.qcba.data_structures import QuantitativeDataFrame
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from pyids.algorithms.ids import IDS
 
-def Train(algorithm, lambda_array, cars, df, output_path):
+def Train(algorithm, lambda_array, cars, df, output_path, json_output_path=None):
     quant_dataframe = QuantitativeDataFrame(df)
 
     MyPrint("Training_Func", "Beginning training with pyIDS...")
@@ -18,7 +20,15 @@ def Train(algorithm, lambda_array, cars, df, output_path):
 
     MyPrint("Training_Func", f"Total Rules Selected by IDS: {len(ids.clf.rules)}\n")
 
-    acc = ids.score(quant_dataframe) # accuracy is the percentage of the dataset covered by the generated rules
+    acc = ids.score(quant_dataframe)
+    MyPrint("Training_Func", f"IDS Accuracy: {acc:.4f}")
+
+    acc = ids.score_auc(quant_dataframe)
+    MyPrint("Training_Func", f"IDS AUC: {acc:.4f}")
+
+    metrics = ids.score_interpretability_metrics(quant_dataframe)
+    for key, value in metrics.items():
+        MyPrint("Training_Func", f"{key}: {value}")
 
     rules_list = []
     json_list = []
